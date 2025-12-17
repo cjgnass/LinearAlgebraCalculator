@@ -1,5 +1,5 @@
 import { RenderExpr, RenderInteractiveExpr } from "./renderer.tsx";
-import { useState, useMemo, useCallback, KeyboardEvent } from "react";
+import { useState, useMemo, KeyboardEvent } from "react";
 import { lex } from "./lexer";
 import { parse } from "./parser";
 import "./calculator.css";
@@ -7,6 +7,7 @@ import "./calculator.css";
 export default function Editor() {
     const [text, setText] = useState("");
     const [caret, setCaret] = useState(0);
+    const [fontSize, setFontSize] = useState(2);
 
     const { expr, errors } = useMemo(() => {
         const sanitizedText = text.replace(/\s*(\/)\s*/g, "$1");
@@ -110,10 +111,11 @@ export default function Editor() {
                         expr={expr}
                         text={text}
                         caret={caret}
+                        fontSize={fontSize}
                     />
                 </div>
                 <div className="output-box">
-                    <RenderExpr expr={simplify(expr)} />
+                    <RenderExpr expr={simplify(expr)} fontSize={fontSize} />
                 </div>
             </div>
         </>

@@ -8,29 +8,66 @@ import type {
     ParenExpression,
 } from "./ast";
 
-export function RenderExpr({ expr }: { expr: Expression }): React.ReactNode {
+export function RenderExpr({
+    expr,
+    fontSize,
+}: {
+    expr: Expression;
+    fontSize: number;
+}): React.ReactNode {
     const latex = expr.value.toString();
     const html = renderToString(latex, { throwOnError: false });
-    return <span dangerouslySetInnerHTML={{ __html: html }} />;
+    const fontSizeStyle = {
+        "--font-size": `${fontSize}rem`,
+    } as React.CSSProperties;
+
+    return (
+        <span
+            className="font-size"
+            style={fontSizeStyle}
+            dangerouslySetInnerHTML={{ __html: html }}
+        />
+    );
 }
 
 export function RenderInteractiveExpr({
     expr,
     text,
     caret,
+    fontSize,
 }: {
     expr: Expression;
     text: string;
     caret: number;
+    fontSize: number;
 }): React.ReactNode {
+    if (text === "") {
+        return (
+            <span
+                className="interactive-expr"
+                style={{ "--font-size": `${fontSize}rem` }}
+            >
+                <Caret className={"caret floating-caret"} key={`c-${caret}`} />
+            </span>
+        );
+    }
     const parts: React.ReactNode[] = [];
     for (let i = 0; i < expr.start; i++) {
-        if (i === caret) parts.push(<Caret key={`c-${i}`} />);
+        if (i === caret) {
+            console.log("caret");
+            parts.push(
+                <Caret className={"caret floating-caret"} key={`c-${i}`} />,
+            );
+        }
         const html = renderToString(text[i] == " " ? "~" : text[i], {
             throwOnError: false,
         });
         parts.push(
-            <span key={`s-${i}`} dangerouslySetInnerHTML={{ __html: html }} />,
+            <span
+                className="literal space"
+                key={`s-${i}`}
+                dangerouslySetInnerHTML={{ __html: html }}
+            />,
         );
     }
     parts.push(
@@ -38,38 +75,36 @@ export function RenderInteractiveExpr({
     );
 
     for (let i = expr.end; i <= text.length; i++) {
-        if (i === caret && i > expr.end) parts.push(<Caret key={`c-${i}`} />);
+        if (i === caret && i > expr.end)
+            parts.push(
+                <Caret className={"caret floating-caret"} key={`c-${i}`} />,
+            );
         if (i < text.length && text[i] !== "(") {
             const html = renderToString(text[i] == " " ? "~" : text[i], {
                 throwOnError: false,
             });
             parts.push(
                 <span
+                    className="literal space"
                     key={`s-${i}`}
                     dangerouslySetInnerHTML={{ __html: html }}
                 />,
             );
         }
     }
-    return <span className="interactive-expr">{parts}</span>;
+    return (
+        <span
+            className="interactive-expr"
+            style={{ "font-size": `${fontSize}rem` }}
+        >
+            {parts}
+        </span>
+    );
 }
 
 function Caret({ className }: { className?: string }): React.ReactNode {
     const cls = className ? `caret ${className}` : "caret";
     return <span className={cls} aria-hidden="true" />;
-}
-
-function toLatex(expr: Expression): string {
-    switch (expr.kind) {
-        case "NumberLiteral":
-            return expr.value.toString();
-        case "BinaryExpression":
-            return "";
-        case "ParenExpression":
-            return "";
-        default:
-            return "";
-    }
 }
 
 function NumberLiteral({
@@ -86,10 +121,11 @@ function NumberLiteral({
     for (let exprTextIdx = 0; exprTextIdx <= exprText.length; exprTextIdx++) {
         const i = expr.start + exprTextIdx;
         if (i === caret) parts.push(<Caret key={`c-${i}`} />);
-
         if (exprTextIdx < exprText.length) {
             const html = renderToString(
-                exprText[exprTextIdx] === " " ? "~" : exprText[exprTextIdx],
+                exprText[exprTextIdx] === " "
+                    ? "~"
+                    : `${exprText[exprTextIdx]}`,
                 {
                     throwOnError: false,
                 },
@@ -102,7 +138,7 @@ function NumberLiteral({
             );
         }
     }
-    return <span className="number-literal">{parts}</span>;
+    return <span className="literal space">{parts}</span>;
 }
 
 function DivExpression({
@@ -135,6 +171,23 @@ function BinaryExpression({
     text: string;
     caret: number;
 }): React.ReactNode {
+    const leftRef = useRef<HTMLSpanElement>(null);
+    const rightRef = useRef<HTMLSpanElement>(null);
+    const [height, setHeight] = useState(0);
+
+    useLayoutEffect(() => {
+        if (leftRef.current && rightRef.current) {
+            console.log("left", leftRef.current.offsetHeight);
+            console.log("right", rightRef.current.offsetHeight);
+            setHeight(
+                Math.max(
+                    leftRef.current.offsetHeight,
+                    rightRef.current.offsetHeight,
+                ),
+            );
+        }
+    }, [expr, text]);
+
     if (expr.op === "/") {
         return DivExpression({
             expr,
@@ -149,8 +202,19 @@ function BinaryExpression({
     const middleLength = middleEnd - middleStart;
     const parts: React.ReactNode[] = [];
     parts.push(
-        <Expression key={"left"} expr={left} text={text} caret={caret} />,
+        <span ref={leftRef} key={"left"}>
+            <Expression key={"left"} expr={left} text={text} caret={caret} />
+        </span>,
     );
+    // parts.push(
+    //     <Expression
+    //         ref={leftRef}
+    //         key={"left"}
+    //         expr={left}
+    //         text={text}
+    //         caret={caret}
+    //     />,
+    // );
 
     for (let middleIdx = 0; middleIdx < middleLength; middleIdx++) {
         const i = middleStart + middleIdx;
@@ -159,8 +223,10 @@ function BinaryExpression({
             const html = renderToString(text[i] == " " ? "~" : text[i], {
                 throwOnError: false,
             });
+
             parts.push(
                 <span
+                    className="literal space"
                     key={`s-${i}`}
                     dangerouslySetInnerHTML={{ __html: html }}
                 />,
@@ -169,9 +235,24 @@ function BinaryExpression({
     }
 
     parts.push(
-        <Expression key={"right"} expr={right} text={text} caret={caret} />,
+        <span ref={rightRef} key={"right"}>
+            <Expression key={"right"} expr={right} text={text} caret={caret} />
+        </span>,
     );
-    return <span className="interactive-expr">{parts}</span>;
+    // parts.push(
+    //     <Expression
+    //         ref={rightRef}
+    //         key={"right"}
+    //         expr={right}
+    //         text={text}
+    //         caret={caret}
+    //     />,
+    // );
+    return (
+        <span className="binary-expression" style={{ "--height": height }}>
+            {parts}
+        </span>
+    );
 }
 
 function ExpExpression({
@@ -185,25 +266,41 @@ function ExpExpression({
 }): React.ReactNode {
     const baseRef = useRef<HTMLSpanElement>(null);
     const [offset, setOffset] = useState(0);
+    const expRef = useRef<HTMLSpanElement>(null);
+    const [paddingTop, setPaddingTop] = useState(0);
+    // const exprRef
+    // const [height, setHeight] = useState(0);
 
     useLayoutEffect(() => {
-        if (baseRef.current) {
-            const height = baseRef.current.getBoundingClientRect().height;
-            const baselineHeight = 20; // single-line height
-            // Offset is half the base height, so exponent sits at top of base
-            const newOffset = Math.max(0, (height - baselineHeight) / 2 + baselineHeight * 0.4);
-            setOffset(newOffset);
+        if (baseRef.current && expRef.current) {
+            const baseHeight = baseRef.current.getBoundingClientRect().height;
+            const expHeight = expRef.current.getBoundingClientRect().height;
+            const expOffset = baseHeight / 2;
+            const overflow = expOffset + expHeight - baseHeight;
+            setOffset(Math.max(0, expOffset));
+            setPaddingTop(Math.max(0, overflow));
         }
     }, [expr, text]);
 
     const base = <Expression expr={expr.left} text={text} caret={caret} />;
     const exponent = <Expression expr={expr.right} text={text} caret={caret} />;
-    const expStyle = { "--exp-offset": `${-offset}px` } as React.CSSProperties;
 
     return (
-        <span className="exp">
-            <span ref={baseRef} className="exp-base">{base}</span>
-            <span className="exp-exponent" style={expStyle}>{exponent}</span>
+        <span className="exp" style={{ "--exp-padding": `${paddingTop}px` }}>
+            <span
+                ref={baseRef}
+                className="exp-base"
+                style={{ "--exp-padding": `${offset}px` }}
+            >
+                {base}
+            </span>
+            <span
+                ref={expRef}
+                className="exp-exponent"
+                style={{ "--exp-offset": `${offset}px` }}
+            >
+                {exponent}
+            </span>
         </span>
     );
 }
@@ -218,11 +315,12 @@ function ParenExpression({
     caret: number;
 }): React.ReactNode {
     const innerRef = useRef<HTMLSpanElement>(null);
+
     const [scale, setScale] = useState(1);
     useLayoutEffect(() => {
         if (innerRef.current) {
             const height = innerRef.current.getBoundingClientRect().height;
-            const baseHeight = 25;
+            const baseHeight = 20;
             const newScale = Math.max(1, height / baseHeight);
             setScale(newScale);
         }
@@ -265,14 +363,13 @@ function ParenExpression({
             );
         }
     }
-    const parenStyle = { "--paren-scale": scale } as React.CSSProperties;
     return (
-        <span className="paren-expr">
+        <span className="paren-expr font-size">
             {start === caret && <Caret key={`c-${start}`} />}
             <span
                 key={`s-${start}`}
                 className="paren"
-                style={parenStyle}
+                style={{ "--paren-scale": `${scale}` }}
                 dangerouslySetInnerHTML={{ __html: leftParenHtml }}
             />
             <span ref={innerRef} className="paren-inner">
@@ -282,7 +379,7 @@ function ParenExpression({
                 <span
                     key={`s-${end}`}
                     className="paren"
-                    style={parenStyle}
+                    style={{ "--paren-scale": `${scale}` }}
                     dangerouslySetInnerHTML={{ __html: rightParenHtml }}
                 />
             )}

@@ -5,12 +5,12 @@
     align-items: center;
 }
 .input-box {
-    white-space: pre;
     padding: 10px;
     border: 1px solid var(--border, #ccc);
     min-height: 200px;
-    cursor: text;
     min-width: 500px;
+    display: flex;
+    align-items: flex-start;
 }
 .input-box:focus {
     outline: 2px solid #6aa3ff;
@@ -22,59 +22,63 @@
     min-height: 200px;
     min-width: 200px;
 }
-.caret {
+
+/* ------------------------------------------------ */
+.interactive-expr {
     display: inline-flex;
+    margin: 0.5rem 0.5rem;
+    font-size: var(--font-size, 0.1rem);
+    border: 1px solid var(--border, #ccc);
+}
+
+.floating-caret {
+    margin-top: 0.5rem;
+}
+
+.caret {
+    display: inline-block;
     width: 1px;
     height: 1em;
     background: currentColor;
     animation: blink 1s step-end infinite;
 }
 
-.interactive-expr {
+.literal {
     display: inline-flex;
-    margin: 0.1em 0.1em;
     align-items: center;
+    /*height: 1em;*/
     /*border: 1px solid var(--border, #ccc);*/
 }
 
-.number-literal {
+.space {
+    margin-right: 0.2rem;
+}
+
+.binary-expression {
     display: inline-flex;
-    margin: 0.1em 0.2em;
     align-items: center;
+    margin-right: 0.2rem;
+    height: var(--height, 1em);
     /*border: 1px solid var(--border, #ccc);*/
 }
 
 .fraction {
-    /*border: 1px solid var(--border, #ccc);*/
     display: inline-flex;
     flex-direction: column;
-    align-items: stretch; /* makes both slots share the same width */
-    justify-content: center;
-    line-height: 1.2;
-}
-
-.fraction .numerator,
-.fraction .denominator {
-    display: block;
-    text-align: center;
-    padding: 0.1em 0em;
-    /*border: 1px solid var(--border, #ccc);*/
-    margin: 0.1em 0.3em;
+    padding: 0em 0.2em;
 }
 
 .fraction .denominator {
-    border-top: 1px solid var(--border, #ccc); /* fraction bar */
-    margin-top: 0.2em;
+    border-top: 1px solid var(--border, #ccc);
 }
 .fraction .numerator {
-    border-bottom: 1px solid var(--border, #ccc); /* fraction bar */
-    margin-bottom: -0.3em;
+    border-bottom: 1px solid var(--border, #ccc);
 }
 
 .paren-expr {
     display: inline-flex;
     align-items: center;
-    margin: 0em 0.2em;
+    margin: 0rem 0.2rem;
     /*border: 1px solid var(--border, #ccc);*/
 }
 
@@ -92,20 +96,23 @@
 
 .exp {
     display: inline-flex;
-    align-items: baseline;
+    align-items: flex-end;
+    margin-top: calc(-1 * var(--exp-padding, 0px));
+    border: 1px solid var(--border, #ccc);
 }
 
 .exp-base {
     display: inline-flex;
     align-items: center;
+    /*border: 1px solid var(--border, #ccc);*/
 }
 
 .exp-exponent {
-    transform: translateY(var(--exp-offset, -0.4em));
     display: inline-flex;
     align-items: center;
     font-size: 0.75em;
-    margin-left: -0.1em;
+    margin-left: -0.1rem;
+    margin-bottom: var(--exp-offset, 0.5em);
     /*border: 1px solid var(--border, #ccc);*/
 }
 
