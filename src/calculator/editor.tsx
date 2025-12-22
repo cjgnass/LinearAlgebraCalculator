@@ -10,7 +10,11 @@ export default function Editor() {
     const [fontSize, setFontSize] = useState(2);
 
     const { expr, errors } = useMemo(() => {
-        const sanitizedText = text.replace(/\s*(\/)\s*/g, "$1");
+        const sanitizedText = text
+            .replace(/\s*(\/|,)\s*/g, "$1") // trim around / or ,
+            .replace(/\[\s+/g, "[") // remove whitespace right after [
+            .replace(/\s+\]/g, "]"); // remove whitespace right before ]
+
         const lengthDiff = text.length - sanitizedText.length;
         setCaret(caret - lengthDiff);
         setText(sanitizedText);
@@ -65,6 +69,10 @@ export default function Editor() {
             case "^":
             case "(":
             case ")":
+            case "[":
+            case "]":
+            case ",":
+            case ";":
                 e.preventDefault();
                 setText(text.slice(0, caret) + k + text.slice(caret));
                 setCaret(caret + 1);
@@ -95,6 +103,9 @@ export default function Editor() {
                 return expr;
             case "ParenExpression":
                 return simplify(expr.expr);
+            case "MatrixExpression":
+            default:
+                return expr;
         }
     }
 

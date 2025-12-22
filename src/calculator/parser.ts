@@ -1,6 +1,11 @@
 import type { Token } from "./tokens";
 import { TokenType } from "./tokens";
-import type { Expression, NumberLiteral } from "./ast.ts";
+import type {
+    Expression,
+    NumberLiteral,
+    StringLiteral,
+    Placeholder,
+} from "./ast.ts";
 
 type State = {
     tokens: Token[];
@@ -14,8 +19,24 @@ function consumeToken(state: State): Token | null {
     return token;
 }
 
-function parseNumber(state: State): NumberLiteral {
+function parseNumber(state: State): NumberLiteral | StringLiteral {
     const token = state.tokens[state.i] ?? null;
+
+    if (
+        token &&
+        (token.type === TokenType.Comma ||
+            token.type === TokenType.Semicolon ||
+            token.type === TokenType.RBracket ||
+            token.type === TokenType.LBracket)
+    ) {
+        consumeToken(state);
+        return {
+            kind: "StringLiteral",
+            value: token.value,
+            start: token.start,
+            end: token.end,
+        };
+    }
 
     if (!token || token.type != TokenType.Number) {
         state.errors.push("Expected Number");
@@ -80,7 +101,6 @@ function parseExp(state: State): Expression {
         if (!token || token.type != TokenType.Exp) break;
         consumeToken(state);
         const right = parseParen(state);
-        right.start = token.end;
         const start = left.start;
         const end = right.end === 0 ? token.end : right.end;
 
@@ -108,7 +128,10 @@ function parseMultDiv(state: State): Expression {
 
         consumeToken(state);
         const right = parseExp(state);
-        right.start = token.end;
+        if (right.start === 0 && right.end === 0) {
+            right.start = token.end;
+            right.end = token.end;
+        }
         const start = left.start;
         const end = right.end === 0 ? token.end : right.end;
 
@@ -130,18 +153,26 @@ function parseAddSub(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
+            left.value === "]" ||
             (token.type != TokenType.Add && token.type != TokenType.Sub)
         )
             break;
+        const opStart = token.start;
+        const opEnd = token.end;
         consumeToken(state);
         const right = parseMultDiv(state);
-        right.start = token.end;
+        if (right.start === 0 && right.end === 0) {
+            right.start = token.end;
+            right.end = token.end;
+        }
         const start = left.start;
-        const end = right.end === 0 ? token.end : right.end;
+        const end = right.end;
 
         left = {
             kind: "BinaryExpression",
             op: token.type == TokenType.Add ? "+" : "-",
+            opStart,
+            opEnd,
             left,
             right,
             start,
@@ -151,8 +182,80 @@ function parseAddSub(state: State): Expression {
     return left;
 }
 
+function parseMatrix(state: State): Expression {
+    const token = state.tokens[state.i] ?? null;
+    if (!token || token.type != TokenType.LBracket) {
+        return parseAddSub(state);
+    }
+
+    const exprs: Expression[] = [];
+    while (true) {
+        const expr = parseAddSub(state);
+        exprs.push(expr);
+        if (
+            state.i >= state.tokens.length ||
+            (expr.kind === "StringLiteral" && expr.value === "]")
+        )
+            break;
+    }
+
+    const matrix = [[]];
+    const exprsEnd =
+        exprs[exprs.length - 1].value === "]" ? exprs.length - 1 : exprs.length;
+    let expectingExpr = true;
+    for (let i = 1; i < exprsEnd; i++) {
+        const currExpr = exprs[i];
+        if (currExpr.kind !== "StringLiteral") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push(currExpr);
+                expectingExpr = false;
+            }
+            continue;
+        }
+        if (currExpr.value === ",") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push({
+                    kind: "Placeholder",
+                    pos: currExpr.start,
+                });
+            }
+            expectingExpr = true;
+            continue;
+        }
+        if (currExpr.value === ";") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push({
+                    kind: "Placeholder",
+                    pos: currExpr.start,
+                });
+            }
+            matrix.push([]);
+            expectingExpr = true;
+        }
+    }
+    if (expectingExpr) {
+        matrix[matrix.length - 1].push({
+            kind: "Placeholder",
+            pos:
+                exprs[exprs.length - 1].value === "]"
+                    ? exprs[exprs.length - 1].start
+                    : exprs[exprs.length - 1].end,
+        });
+    }
+
+    return {
+        kind: "MatrixExpression",
+        matrix,
+        start: token.start,
+        end:
+            exprs[exprs.length - 1].value === "]"
+                ? exprs[exprs.length - 1].end
+                : exprs[exprs.length - 1].end + 1,
+    };
+}
+
 function parseExpr(state: State): Expression {
-    return parseAddSub(state);
+    return parseMatrix(state);
 }
 
 export function parse(tokens: Token[]): {

@@ -6,7 +6,16 @@ import type {
     BinaryExpression,
     ExpExpression,
     ParenExpression,
+    MatrixExpression,
 } from "./ast";
+
+type Props = {
+    expr: Expression;
+    text?: string;
+    caret?: number;
+    fontSize?: number;
+    ref?: React.RefObject<HTMLSpanElement | null>;
+};
 
 export function RenderExpr({
     expr,
@@ -15,19 +24,24 @@ export function RenderExpr({
     expr: Expression;
     fontSize: number;
 }): React.ReactNode {
-    const latex = expr.value.toString();
-    const html = renderToString(latex, { throwOnError: false });
-    const fontSizeStyle = {
-        "--font-size": `${fontSize}rem`,
-    } as React.CSSProperties;
-
-    return (
-        <span
-            className="font-size"
-            style={fontSizeStyle}
-            dangerouslySetInnerHTML={{ __html: html }}
-        />
-    );
+    switch (expr.kind) {
+        case "NumberLiteral":
+            const html = renderToString(expr.value.toString(), {
+                throwOnError: false,
+            });
+            return (
+                <span
+                    style={{
+                        fontSize: `${fontSize}rem`,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                />
+            );
+        case "MatrixExpression":
+            return <MatrixExpression expr={expr} fontSize={fontSize} />;
+        default:
+            return <></>;
+    }
 }
 
 export function RenderInteractiveExpr({
@@ -41,402 +55,372 @@ export function RenderInteractiveExpr({
     caret: number;
     fontSize: number;
 }): React.ReactNode {
-    if (text === "") {
-        return (
-            <span
-                className="interactive-expr"
-                style={{ "--font-size": `${fontSize}rem` }}
-            >
-                <Caret className={"caret floating-caret"} key={`c-${caret}`} />
-            </span>
-        );
-    }
     const parts: React.ReactNode[] = [];
-    for (let i = 0; i < expr.start; i++) {
-        if (i === caret) {
-            console.log("caret");
-            parts.push(
-                <Caret className={"caret floating-caret"} key={`c-${i}`} />,
-            );
-        }
-        const html = renderToString(text[i] == " " ? "~" : text[i], {
-            throwOnError: false,
-        });
-        parts.push(
-            <span
-                className="literal space"
-                key={`s-${i}`}
-                dangerouslySetInnerHTML={{ __html: html }}
-            />,
-        );
-    }
-    parts.push(
-        <Expression key={"expr"} expr={expr} text={text} caret={caret} />,
-    );
-
-    for (let i = expr.end; i <= text.length; i++) {
-        if (i === caret && i > expr.end)
-            parts.push(
-                <Caret className={"caret floating-caret"} key={`c-${i}`} />,
-            );
-        if (i < text.length && text[i] !== "(") {
-            const html = renderToString(text[i] == " " ? "~" : text[i], {
-                throwOnError: false,
-            });
-            parts.push(
-                <span
-                    className="literal space"
-                    key={`s-${i}`}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                />,
-            );
-        }
-    }
+    parts.push(...getParts(text, caret, 0, expr.start));
+    parts.push(<Expression key="expr" expr={expr} text={text} caret={caret} />);
+    parts.push(...getParts(text, caret, expr.end, text.length));
     return (
         <span
             className="interactive-expr"
-            style={{ "font-size": `${fontSize}rem` }}
+            style={{ "--font-size": `${fontSize}rem` }}
         >
+            {caret === 0 && <Caret key={`caret-${caret}`} />}
             {parts}
         </span>
     );
+    // return getParts(text, caret, 0, text.length);
 }
 
-function Caret({ className }: { className?: string }): React.ReactNode {
-    const cls = className ? `caret ${className}` : "caret";
-    return <span className={cls} aria-hidden="true" />;
-}
-
-function NumberLiteral({
-    expr,
-    text,
-    caret,
-}: {
-    expr: NumberLiteral;
-    text: string;
-    caret: number;
-}): React.ReactNode {
-    const exprText = text.slice(expr.start, expr.end);
-    const parts: React.ReactNode[] = [];
-    for (let exprTextIdx = 0; exprTextIdx <= exprText.length; exprTextIdx++) {
-        const i = expr.start + exprTextIdx;
-        if (i === caret) parts.push(<Caret key={`c-${i}`} />);
-        if (exprTextIdx < exprText.length) {
-            const html = renderToString(
-                exprText[exprTextIdx] === " "
-                    ? "~"
-                    : `${exprText[exprTextIdx]}`,
-                {
-                    throwOnError: false,
-                },
-            );
-            parts.push(
-                <span
-                    key={`s-${i}`}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                />,
-            );
+// not responsible start caret
+function getParts(
+    text: string,
+    caret: number,
+    start: number,
+    end: number,
+): React.ReactNode[] {
+    const parts = [];
+    for (let i = start; i <= end; i++) {
+        if (i > start && i === caret) {
+            parts.push(<Caret key={`caret-${i}`} />); // caret 1
         }
-    }
-    return <span className="literal space">{parts}</span>;
-}
-
-function DivExpression({
-    expr,
-    text,
-    caret,
-}: {
-    expr: BinaryExpression;
-    text: string;
-    caret: number;
-}): React.ReactNode {
-    const numerator = <Expression expr={expr.left} text={text} caret={caret} />;
-    const denominator = (
-        <Expression expr={expr.right} text={text} caret={caret} />
-    );
-    return (
-        <span className="fraction">
-            <span className="numerator">{numerator}</span>
-            <span className="denominator">{denominator}</span>
-        </span>
-    );
-}
-
-function BinaryExpression({
-    expr,
-    text,
-    caret,
-}: {
-    expr: BinaryExpression;
-    text: string;
-    caret: number;
-}): React.ReactNode {
-    const leftRef = useRef<HTMLSpanElement>(null);
-    const rightRef = useRef<HTMLSpanElement>(null);
-    const [height, setHeight] = useState(0);
-
-    useLayoutEffect(() => {
-        if (leftRef.current && rightRef.current) {
-            console.log("left", leftRef.current.offsetHeight);
-            console.log("right", rightRef.current.offsetHeight);
-            setHeight(
-                Math.max(
-                    leftRef.current.offsetHeight,
-                    rightRef.current.offsetHeight,
-                ),
-            );
-        }
-    }, [expr, text]);
-
-    if (expr.op === "/") {
-        return DivExpression({
-            expr,
-            text,
-            caret,
-        });
-    }
-    const left = expr.left;
-    const right = expr.right;
-    const middleStart = left.end;
-    const middleEnd = right.end == 0 ? expr.end : right.start;
-    const middleLength = middleEnd - middleStart;
-    const parts: React.ReactNode[] = [];
-    parts.push(
-        <span ref={leftRef} key={"left"}>
-            <Expression key={"left"} expr={left} text={text} caret={caret} />
-        </span>,
-    );
-    // parts.push(
-    //     <Expression
-    //         ref={leftRef}
-    //         key={"left"}
-    //         expr={left}
-    //         text={text}
-    //         caret={caret}
-    //     />,
-    // );
-
-    for (let middleIdx = 0; middleIdx < middleLength; middleIdx++) {
-        const i = middleStart + middleIdx;
-        if (i === caret && i > left.end) parts.push(<Caret key={`c-${i}`} />);
-        if (i < expr.end) {
-            const html = renderToString(text[i] == " " ? "~" : text[i], {
+        if (i < end) {
+            const html = renderToString(text[i] === " " ? "~" : text[i], {
                 throwOnError: false,
             });
-
             parts.push(
                 <span
-                    className="literal space"
-                    key={`s-${i}`}
+                    key={`span-${i}`}
                     dangerouslySetInnerHTML={{ __html: html }}
                 />,
             );
         }
     }
+    return parts;
+}
 
-    parts.push(
-        <span ref={rightRef} key={"right"}>
-            <Expression key={"right"} expr={right} text={text} caret={caret} />
-        </span>,
-    );
-    // parts.push(
-    //     <Expression
-    //         ref={rightRef}
-    //         key={"right"}
-    //         expr={right}
-    //         text={text}
-    //         caret={caret}
-    //     />,
-    // );
+function Caret(): React.ReactNode {
+    return <span className="caret" />;
+}
+
+function NumberLiteral({ expr, text, caret, ref }: Props): React.ReactNode {
+    const parts = [];
+
+    parts.push(...getParts(text, caret, expr.start, expr.end));
     return (
-        <span className="binary-expression" style={{ "--height": height }}>
+        <span ref={ref} className="number-literal">
             {parts}
+            {/*{caret === expr.end && <Caret />}*/}
         </span>
     );
 }
 
-function ExpExpression({
-    expr,
-    text,
-    caret,
-}: {
-    expr: ExpExpression;
-    text: string;
-    caret: number;
-}): React.ReactNode {
-    const baseRef = useRef<HTMLSpanElement>(null);
-    const [offset, setOffset] = useState(0);
-    const expRef = useRef<HTMLSpanElement>(null);
-    const [paddingTop, setPaddingTop] = useState(0);
-    // const exprRef
-    // const [height, setHeight] = useState(0);
-
-    useLayoutEffect(() => {
-        if (baseRef.current && expRef.current) {
-            const baseHeight = baseRef.current.getBoundingClientRect().height;
-            const expHeight = expRef.current.getBoundingClientRect().height;
-            const expOffset = baseHeight / 2;
-            const overflow = expOffset + expHeight - baseHeight;
-            setOffset(Math.max(0, expOffset));
-            setPaddingTop(Math.max(0, overflow));
-        }
-    }, [expr, text]);
-
-    const base = <Expression expr={expr.left} text={text} caret={caret} />;
-    const exponent = <Expression expr={expr.right} text={text} caret={caret} />;
-
+function DivExpression({ expr, text, caret, ref }: Props): React.ReactNode {
+    // console.log("expr.right.end", expr.right.end);
     return (
-        <span className="exp" style={{ "--exp-padding": `${paddingTop}px` }}>
-            <span
-                ref={baseRef}
-                className="exp-base"
-                style={{ "--exp-padding": `${offset}px` }}
-            >
-                {base}
+        <span ref={ref} className="div-expression">
+            <span className="numerator">
+                <Expression expr={expr.left} text={text} caret={caret} />
             </span>
-            <span
-                ref={expRef}
-                className="exp-exponent"
-                style={{ "--exp-offset": `${offset}px` }}
-            >
-                {exponent}
+            <span className="denominator">
+                {caret === expr.right.start && <Caret />}
+                <Expression expr={expr.right} text={text} caret={caret} />
             </span>
         </span>
     );
 }
 
-function ParenExpression({
-    expr,
-    text,
-    caret,
-}: {
-    expr: ParenExpression;
-    text: string;
-    caret: number;
-}): React.ReactNode {
-    const innerRef = useRef<HTMLSpanElement>(null);
-
-    const [scale, setScale] = useState(1);
-    useLayoutEffect(() => {
-        if (innerRef.current) {
-            const height = innerRef.current.getBoundingClientRect().height;
-            const baseHeight = 20;
-            const newScale = Math.max(1, height / baseHeight);
-            setScale(newScale);
-        }
-    }, [expr, text]);
-    const leftParenHtml = renderToString("(", { throwOnError: false });
-    const rightParenHtml = renderToString(")", { throwOnError: false });
-    const start = expr.start;
-    const end = expr.end;
-    const innerExpr = expr.expr;
-    const innerStart = innerExpr.start;
-    const innerEnd = innerExpr.end;
-    const innerParts: React.ReactNode[] = [];
-    for (let i = start + 1; i < innerStart; i++) {
-        if (i === caret) {
-            innerParts.push(<Caret key={`c-${i}`} />);
-        }
-        const html = renderToString(text[i] == " " ? "~" : text[i], {
-            throwOnError: false,
-        });
-        innerParts.push(
-            <span key={`s-${i}`} dangerouslySetInnerHTML={{ __html: html }} />,
+function BinaryExpression({ expr, text, caret, ref }: Props): React.ReactNode {
+    if (expr.op === "/") {
+        return (
+            <DivExpression expr={expr} text={text} caret={caret} ref={ref} />
         );
     }
-    innerParts.push(
-        <Expression key={"expr"} expr={expr.expr} text={text} caret={caret} />,
+    const parts = [];
+    parts.push(
+        <Expression key={"left"} expr={expr.left} text={text} caret={caret} />,
     );
-    for (let i = innerEnd + 1; i < end; i++) {
-        if (i === caret) {
-            innerParts.push(<Caret key={`c-${i}`} />);
-        }
-        if (i < end - 1) {
-            const html = renderToString(text[i] == " " ? "~" : text[i], {
-                throwOnError: false,
-            });
-            innerParts.push(
-                <span
-                    key={`s-${i}`}
-                    dangerouslySetInnerHTML={{ __html: html }}
-                />,
-            );
-        }
-    }
+    const exprRightStart =
+        expr.right.start === 0 ? text.length : expr.right.start;
+    parts.push(...getParts(text, caret, expr.left.end, exprRightStart));
+    parts.push(
+        <Expression
+            key={"right"}
+            expr={expr.right}
+            text={text}
+            caret={caret}
+        />,
+    );
     return (
-        <span className="paren-expr font-size">
-            {start === caret && <Caret key={`c-${start}`} />}
+        <span ref={ref} className="binary-expression">
+            {parts}
+        </span>
+    );
+}
+
+function ExpExpression({ expr, text, caret, ref }: Props): React.ReactNode {
+    return (
+        <span ref={ref} className="exp-expression">
+            <span className="exp-base">
+                <Expression
+                    key={"base"}
+                    expr={expr.left}
+                    text={text}
+                    caret={caret}
+                />
+            </span>
+            <span className="exp-exponent">
+                {caret === expr.right.start && <Caret />}
+                <Expression
+                    key={"exp"}
+                    expr={expr.right}
+                    text={text}
+                    caret={caret}
+                />
+            </span>
+        </span>
+    );
+}
+
+function ParenExpression({ expr, text, caret, ref }: Props): React.ReactNode {
+    const innerRef = useRef<HTMLSpanElement>(null);
+    const parenRef = useRef<HTMLSpanElement>(null);
+    const [scale, setScale] = useState(1);
+    const [parenHeight, setParenHeight] = useState(1);
+    useLayoutEffect(() => {
+        if (parenRef.current) {
+            const height = parenRef.current.getBoundingClientRect().height;
+            setParenHeight(height);
+        }
+    }, []);
+    const leftParenHtml = renderToString("(", { throwOnError: false });
+    const rightParenHtml = renderToString(")", { throwOnError: false });
+    useLayoutEffect(() => {
+        if (innerRef.current && parenRef.current) {
+            const innerHeight = innerRef.current.getBoundingClientRect().height;
+            if (innerHeight > 0) setScale(innerHeight / parenHeight);
+        }
+    }, [expr, text, parenHeight]);
+    return (
+        <span ref={ref} className={"paren-expression"}>
+            {/*{caret === expr.start && <Caret />}*/}
             <span
-                key={`s-${start}`}
+                ref={parenRef}
                 className="paren"
-                style={{ "--paren-scale": `${scale}` }}
+                style={{ "--scale": scale }}
                 dangerouslySetInnerHTML={{ __html: leftParenHtml }}
             />
-            <span ref={innerRef} className="paren-inner">
-                {innerParts}
-            </span>
-            {expr.end != innerExpr.end && (
+            {caret === expr.start + 1 && <Caret />}
+            {getParts(text, caret, expr.start + 1, expr.expr.start)}
+            <Expression
+                key={"expr"}
+                expr={expr.expr}
+                text={text}
+                caret={caret}
+                ref={innerRef}
+            />
+            {getParts(text, caret, expr.expr.end, expr.end - 1)}
+            {expr.end !== expr.expr.end && (
                 <span
-                    key={`s-${end}`}
                     className="paren"
-                    style={{ "--paren-scale": `${scale}` }}
+                    style={{ "--scale": scale }}
                     dangerouslySetInnerHTML={{ __html: rightParenHtml }}
                 />
             )}
-            {end === caret && end != innerExpr.end && (
-                <Caret key={`c-${end}`} />
-            )}
+            {expr.expr.end !== expr.end && caret == expr.end && <Caret />}
         </span>
     );
 }
 
-function Expression({
+function MatrixExpression({
     expr,
     text,
     caret,
-}: {
-    expr: Expression;
-    text: string;
-    caret: number;
-}): React.ReactNode {
+    ref,
+    fontSize,
+}: Props): React.ReactNode {
+    const innerRef = useRef<HTMLSpanElement>(null);
+    const bracketRef = useRef<HTMLSpanElement>(null);
+    const [scale, setScale] = useState(1);
+    const [bracketHeight, setBracketHeight] = useState(1);
+    useLayoutEffect(() => {
+        if (bracketRef.current) {
+            const height = bracketRef.current.getBoundingClientRect().height;
+            setBracketHeight(height);
+        }
+    }, []);
+    const leftBracketHtml = renderToString("[", { ThrowOnError: false });
+    const rightBracketHtml = renderToString("]", { ThrowOnError: false });
+    useLayoutEffect(() => {
+        if (innerRef.current && bracketRef.current) {
+            const innerHeight = innerRef.current.getBoundingClientRect().height;
+            if (innerHeight > 0) setScale(innerHeight / bracketHeight);
+        }
+    }, [expr, text, bracketHeight]);
+
+    if (text == null || caret == null) {
+        const maxCols = Math.max(...expr.matrix.map((row) => row.length));
+        return (
+            <span ref={ref} className="matrix-expression">
+                <span
+                    ref={bracketRef}
+                    className="bracket"
+                    style={{ "--scale": scale }}
+                    dangerouslySetInnerHTML={{ __html: leftBracketHtml }}
+                />
+                <span
+                    ref={innerRef}
+                    className="matrix-inner"
+                    style={{ "--matrix-cols": maxCols }}
+                >
+                    {expr.matrix.map((row, rowIndex) => {
+                        const elements = row.map((element, colIndex) => (
+                            <span
+                                key={`cell-${rowIndex}-${colIndex}`}
+                                className="matrix-element"
+                            >
+                                <RenderExpr
+                                    expr={element}
+                                    fontSize={fontSize ?? 1}
+                                />
+                            </span>
+                        ));
+                        // Add empty spans to fill remaining columns
+                        const emptySpans = Array.from(
+                            { length: maxCols - row.length },
+                            (_, i) => (
+                                <span
+                                    key={`empty-${rowIndex}-${row.length + i}`}
+                                />
+                            ),
+                        );
+                        return [...elements, ...emptySpans];
+                    })}
+                </span>
+                <span
+                    ref={bracketRef}
+                    className="bracket"
+                    style={{ "--scale": scale }}
+                    dangerouslySetInnerHTML={{ __html: rightBracketHtml }}
+                />
+            </span>
+        );
+    }
+    const maxCols = Math.max(...expr.matrix.map((row) => row.length));
+    console.log("expr", expr.matrix);
+    return (
+        <span ref={ref} className="matrix-expression">
+            <span
+                ref={bracketRef}
+                className="bracket"
+                style={{ "--scale": scale }}
+                dangerouslySetInnerHTML={{ __html: leftBracketHtml }}
+            />
+            {expr.matrix[0].length === 0 && caret === expr.start + 1 && (
+                <Caret />
+            )}
+            <span
+                ref={innerRef}
+                className="matrix-inner"
+                style={{ "--matrix-cols": maxCols }}
+            >
+                {expr.matrix.map((row, rowIndex) => {
+                    const elements = row.map((element, colIndex) => (
+                        <span
+                            key={`cell-${rowIndex}-${colIndex}`}
+                            className="matrix-element"
+                        >
+                            {element.kind !== "Placeholer" &&
+                                caret === element.start && <Caret />}
+                            <Expression
+                                expr={element}
+                                text={text}
+                                caret={caret}
+                            />
+                        </span>
+                    ));
+                    // Add empty spans to fill remaining columns
+                    const emptySpans = Array.from(
+                        { length: maxCols - row.length },
+                        (_, i) => (
+                            <span key={`empty-${rowIndex}-${row.length + i}`} />
+                        ),
+                    );
+                    return [...elements, ...emptySpans];
+                })}
+            </span>
+            {text[expr.end - 1] === "]" && (
+                <span
+                    ref={bracketRef}
+                    className="bracket"
+                    style={{ "--scale": scale }}
+                    dangerouslySetInnerHTML={{ __html: rightBracketHtml }}
+                />
+            )}
+            {text[expr.end - 1] === "]" && caret === expr.end && <Caret />}
+        </span>
+    );
+}
+
+function Placeholder({ expr, text, caret, ref }: Props): React.ReactNode {
+    return (
+        <span ref={ref} className="placeholder">
+            {caret === expr.pos && <Caret />}
+        </span>
+    );
+}
+
+function Expression({ expr, text, caret, ref }: Props): React.ReactNode {
     switch (expr.kind) {
         case "NumberLiteral":
             return (
                 <NumberLiteral
-                    key={"expr"}
                     expr={expr}
                     text={text}
                     caret={caret}
+                    ref={ref}
                 />
             );
         case "BinaryExpression":
             return (
                 <BinaryExpression
-                    key={"expr"}
                     expr={expr}
                     text={text}
                     caret={caret}
+                    ref={ref}
                 />
             );
         case "ExpExpression":
             return (
                 <ExpExpression
-                    key={"expr"}
                     expr={expr}
                     text={text}
                     caret={caret}
+                    ref={ref}
                 />
             );
         case "ParenExpression":
             return (
                 <ParenExpression
-                    key={"expr"}
                     expr={expr}
                     text={text}
                     caret={caret}
+                    ref={ref}
                 />
             );
+        case "MatrixExpression":
+            return (
+                <MatrixExpression
+                    expr={expr}
+                    text={text}
+                    caret={caret}
+                    ref={ref}
+                />
+            );
+        case "Placeholder":
+            return (
+                <Placeholder expr={expr} text={text} caret={caret} ref={ref} />
+            );
         default:
-            return;
+            return <></>;
     }
 }
