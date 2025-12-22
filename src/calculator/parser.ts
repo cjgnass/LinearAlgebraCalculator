@@ -101,13 +101,21 @@ function parseExp(state: State): Expression {
         if (!token || token.type != TokenType.Exp) break;
         consumeToken(state);
         const right = parseParen(state);
+        console.log("right.end", right.end);
+        console.log("right", right);
+        console.log("token.end", token.end);
+
         const start = left.start;
         const end = right.end === 0 ? token.end : right.end;
+        console.log("end", end);
 
         left = {
             kind: "ExpExpression",
             left,
-            right,
+            right:
+                right.start === right.end
+                    ? { kind: "Placeholder", pos: token.end }
+                    : right,
             start,
             end,
         };
@@ -122,6 +130,7 @@ function parseMultDiv(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
+            left.kind === "StringLiteral" ||
             (token.type != TokenType.Mult && token.type != TokenType.Div)
         )
             break;
@@ -153,7 +162,7 @@ function parseAddSub(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
-            left.value === "]" ||
+            left.kind === "StringLiteral" ||
             (token.type != TokenType.Add && token.type != TokenType.Sub)
         )
             break;

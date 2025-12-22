@@ -68,7 +68,6 @@ export function RenderInteractiveExpr({
             {parts}
         </span>
     );
-    // return getParts(text, caret, 0, text.length);
 }
 
 // not responsible start caret
@@ -109,13 +108,11 @@ function NumberLiteral({ expr, text, caret, ref }: Props): React.ReactNode {
     return (
         <span ref={ref} className="number-literal">
             {parts}
-            {/*{caret === expr.end && <Caret />}*/}
         </span>
     );
 }
 
 function DivExpression({ expr, text, caret, ref }: Props): React.ReactNode {
-    // console.log("expr.right.end", expr.right.end);
     return (
         <span ref={ref} className="div-expression">
             <span className="numerator">
@@ -158,6 +155,7 @@ function BinaryExpression({ expr, text, caret, ref }: Props): React.ReactNode {
 }
 
 function ExpExpression({ expr, text, caret, ref }: Props): React.ReactNode {
+    console.log(expr);
     return (
         <span ref={ref} className="exp-expression">
             <span className="exp-base">
@@ -202,7 +200,6 @@ function ParenExpression({ expr, text, caret, ref }: Props): React.ReactNode {
     }, [expr, text, parenHeight]);
     return (
         <span ref={ref} className={"paren-expression"}>
-            {/*{caret === expr.start && <Caret />}*/}
             <span
                 ref={parenRef}
                 className="paren"
@@ -306,7 +303,6 @@ function MatrixExpression({
         );
     }
     const maxCols = Math.max(...expr.matrix.map((row) => row.length));
-    console.log("expr", expr.matrix);
     return (
         <span ref={ref} className="matrix-expression">
             <span
