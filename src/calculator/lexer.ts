@@ -6,6 +6,7 @@ const isDigit = (c: string) => c >= "0" && c <= "9";
 export function lex(input: string): Token[] {
     const tokens: Token[] = [];
     let i = 0;
+    let temp = "";
 
     while (i < input.length) {
         const start = i;
@@ -83,24 +84,24 @@ export function lex(input: string): Token[] {
             case "7":
             case "8":
             case "9":
-                let numStr = input[i];
+                temp = input[i];
                 i++;
-                while (isDigit(input[i])) numStr += input[i++];
-                if (input[i] == ".") numStr += input[i++];
-                while (isDigit(input[i])) numStr += input[i++];
+                while (isDigit(input[i])) temp += input[i++];
+                if (input[i] == ".") temp += input[i++];
+                while (isDigit(input[i])) temp += input[i++];
                 tokens.push({
                     type: TokenType.Number,
-                    value: numStr,
+                    value: temp,
                     start,
                     end: i,
                 });
                 continue;
             case ".":
-                let decStr = ".";
-                while (isDigit(input[++i])) decStr += input[i];
+                temp = input[i];
+                while (isDigit(input[++i])) temp += input[i];
                 tokens.push({
                     type: TokenType.Number,
-                    value: decStr,
+                    value: temp,
                     start,
                     end: i,
                 });
@@ -109,10 +110,5 @@ export function lex(input: string): Token[] {
                 i++;
         }
     }
-    const tNums = [];
-    tokens.forEach((token) => {
-        token.value;
-    });
-
     return tokens;
 }
