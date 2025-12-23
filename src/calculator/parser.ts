@@ -1,6 +1,6 @@
 import type { Token } from "./tokens";
 import { TokenType } from "./tokens";
-import type { Expression, Literal, ParenExpression } from "./ast.ts";
+import type { Expression, Literal } from "./ast.ts";
 
 type State = {
     tokens: Token[];
@@ -93,9 +93,11 @@ function parseMatrix(state: State): Expression {
         )
             break;
     }
-    const matrix = [[]];
+    const matrix: Expression[][] = [[]];
     const exprsEnd =
-        exprs[exprs.length - 1].value === "]" ? exprs.length - 1 : exprs.length;
+        (exprs[exprs.length - 1] as Literal).value === "]"
+            ? exprs.length - 1
+            : exprs.length;
     let expectingExpr = true;
     for (let i = 1; i < exprsEnd; i++) {
         const currExpr = exprs[i];
@@ -110,7 +112,8 @@ function parseMatrix(state: State): Expression {
             if (expectingExpr) {
                 matrix[matrix.length - 1].push({
                     kind: "Placeholder",
-                    pos: currExpr.start,
+                    start: currExpr.start,
+                    end: currExpr.start + 1,
                 });
             }
             expectingExpr = true;
@@ -120,7 +123,8 @@ function parseMatrix(state: State): Expression {
             if (expectingExpr) {
                 matrix[matrix.length - 1].push({
                     kind: "Placeholder",
-                    pos: currExpr.start,
+                    start: currExpr.start,
+                    end: currExpr.start + 1,
                 });
             }
             matrix.push([]);
@@ -128,12 +132,14 @@ function parseMatrix(state: State): Expression {
         }
     }
     if (expectingExpr) {
+        const pos =
+            (exprs[exprs.length - 1] as Literal).value === "]"
+                ? exprs[exprs.length - 1].start
+                : exprs[exprs.length - 1].end;
         matrix[matrix.length - 1].push({
             kind: "Placeholder",
-            pos:
-                exprs[exprs.length - 1].value === "]"
-                    ? exprs[exprs.length - 1].start
-                    : exprs[exprs.length - 1].end,
+            start: pos,
+            end: pos + 1,
         });
     }
 
@@ -142,7 +148,7 @@ function parseMatrix(state: State): Expression {
         matrix,
         start: token.start,
         end:
-            exprs[exprs.length - 1].value === "]"
+            (exprs[exprs.length - 1] as Literal).value === "]"
                 ? exprs[exprs.length - 1].end
                 : exprs[exprs.length - 1].end + 1,
     };
@@ -168,7 +174,11 @@ function parseExp(state: State): Expression {
             left,
             right:
                 right.start === right.end
-                    ? { kind: "Placeholder", pos: token.end }
+                    ? {
+                          kind: "Placeholder",
+                          start: token.end,
+                          end: token.end + 1,
+                      }
                     : right,
             start,
             end,
@@ -184,7 +194,6 @@ function parseMultDiv(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
-            left.kind === "CharLiteral" ||
             (token.type != TokenType.Mult && token.type != TokenType.Div)
         )
             break;
@@ -201,6 +210,8 @@ function parseMultDiv(state: State): Expression {
         left = {
             kind: "BinaryExpression",
             op: token.type == TokenType.Mult ? "*" : "/",
+            opStart: token.start,
+            opEnd: token.end,
             left,
             right,
             start,
