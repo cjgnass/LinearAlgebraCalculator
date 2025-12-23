@@ -14,24 +14,6 @@ export function lex(input: string): Token[] {
             case " ":
                 i++;
                 continue;
-            case "(":
-                tokens.push({
-                    type: TokenType.LParen,
-                    value: "(",
-                    start,
-                    end: start + 1,
-                });
-                i++;
-                continue;
-            case ")":
-                tokens.push({
-                    type: TokenType.RParen,
-                    value: ")",
-                    start,
-                    end: start + 1,
-                });
-                i++;
-                continue;
             case "+":
                 tokens.push({
                     type: TokenType.Add,
@@ -77,38 +59,15 @@ export function lex(input: string): Token[] {
                 });
                 i++;
                 continue;
+            case "(":
+            case ")":
             case "[":
-                tokens.push({
-                    type: TokenType.LBracket,
-                    value: "[",
-                    start,
-                    end: start + 1,
-                });
-                i++;
-                continue;
-
             case "]":
-                tokens.push({
-                    type: TokenType.RBracket,
-                    value: "]",
-                    start,
-                    end: start + 1,
-                });
-                i++;
-                continue;
             case ",":
-                tokens.push({
-                    type: TokenType.Comma,
-                    value: ",",
-                    start,
-                    end: start + 1,
-                });
-                i++;
-                continue;
             case ";":
                 tokens.push({
-                    type: TokenType.Semicolon,
-                    value: ";",
+                    type: TokenType.Char,
+                    value: input[i],
                     start,
                     end: start + 1,
                 });

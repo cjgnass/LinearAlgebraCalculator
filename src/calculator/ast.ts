@@ -38,8 +38,8 @@ export type NumberLiteral = {
     end: number;
 };
 
-export type StringLiteral = {
-    kind: "StringLiteral";
+export type CharLiteral = {
+    kind: "CharLiteral";
     value: string;
     start: number;
     end: number;

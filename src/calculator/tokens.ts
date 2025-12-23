@@ -5,12 +5,7 @@ export enum TokenType {
     Mult = "Mult",
     Div = "Div",
     Exp = "Exp",
-    LParen = "(",
-    RParen = ")",
-    LBracket = "[",
-    RBracket = "]",
-    Comma = ",",
-    Semicolon = ";",
+    Char = "Char",
 }
 
 export type Token = {

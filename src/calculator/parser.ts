@@ -3,7 +3,7 @@ import { TokenType } from "./tokens";
 import type {
     Expression,
     NumberLiteral,
-    StringLiteral,
+    CharLiteral,
     Placeholder,
 } from "./ast.ts";
 
@@ -19,19 +19,13 @@ function consumeToken(state: State): Token | null {
     return token;
 }
 
-function parseNumber(state: State): NumberLiteral | StringLiteral {
+function parseNumber(state: State): NumberLiteral | CharLiteral {
     const token = state.tokens[state.i] ?? null;
 
-    if (
-        token &&
-        (token.type === TokenType.Comma ||
-            token.type === TokenType.Semicolon ||
-            token.type === TokenType.RBracket ||
-            token.type === TokenType.LBracket)
-    ) {
+    if (token && token.type == TokenType.Char) {
         consumeToken(state);
         return {
-            kind: "StringLiteral",
+            kind: "CharLiteral",
             value: token.value,
             start: token.start,
             end: token.end,
@@ -65,7 +59,7 @@ function parseParen(state: State): Expression {
     }
     const start = token.start;
     if (token.type == TokenType.Number) return parseNumber(state);
-    if (token.type == TokenType.LParen) {
+    if (token.type == TokenType.Char && token.value == "(") {
         consumeToken(state);
         const expr = parseExpr(state);
         if (expr.start == 0 && expr.end == 0) {
@@ -73,7 +67,7 @@ function parseParen(state: State): Expression {
             expr.end = token.end;
         }
         const next = state.tokens[state.i] ?? null;
-        if (!next || next.type != TokenType.RParen) {
+        if (!next || next.type != TokenType.Char || next.value != ")") {
             state.errors.push("Expected RParen");
             return {
                 kind: "ParenExpression",
@@ -96,7 +90,7 @@ function parseParen(state: State): Expression {
 
 function parseMatrix(state: State): Expression {
     const token = state.tokens[state.i] ?? null;
-    if (!token || token.type != TokenType.LBracket) {
+    if (!token || token.type != TokenType.Char || token.value != "[") {
         return parseParen(state);
     }
     const exprs: Expression[] = [];
@@ -105,7 +99,7 @@ function parseMatrix(state: State): Expression {
         exprs.push(expr);
         if (
             state.i >= state.tokens.length ||
-            (expr.kind === "StringLiteral" && expr.value === "]")
+            (expr.kind === "CharLiteral" && expr.value === "]")
         )
             break;
     }
@@ -115,7 +109,7 @@ function parseMatrix(state: State): Expression {
     let expectingExpr = true;
     for (let i = 1; i < exprsEnd; i++) {
         const currExpr = exprs[i];
-        if (currExpr.kind !== "StringLiteral") {
+        if (currExpr.kind !== "CharLiteral") {
             if (expectingExpr) {
                 matrix[matrix.length - 1].push(currExpr);
                 expectingExpr = false;
@@ -200,7 +194,7 @@ function parseMultDiv(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
-            left.kind === "StringLiteral" ||
+            left.kind === "CharLiteral" ||
             (token.type != TokenType.Mult && token.type != TokenType.Div)
         )
             break;
@@ -232,7 +226,7 @@ function parseAddSub(state: State): Expression {
         const token = state.tokens[state.i] ?? null;
         if (
             !token ||
-            left.kind === "StringLiteral" ||
+            left.kind === "CharLiteral" ||
             (token.type != TokenType.Add && token.type != TokenType.Sub)
         )
             break;
