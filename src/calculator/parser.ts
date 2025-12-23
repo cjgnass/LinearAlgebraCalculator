@@ -1,11 +1,6 @@
 import type { Token } from "./tokens";
 import { TokenType } from "./tokens";
-import type {
-    Expression,
-    NumberLiteral,
-    CharLiteral,
-    Placeholder,
-} from "./ast.ts";
+import type { Expression, Literal, ParenExpression } from "./ast.ts";
 
 type State = {
     tokens: Token[];
@@ -19,11 +14,18 @@ function consumeToken(state: State): Token | null {
     return token;
 }
 
-function parseNumber(state: State): NumberLiteral | CharLiteral {
-    const token = state.tokens[state.i] ?? null;
-
-    if (token && token.type == TokenType.Char) {
-        consumeToken(state);
+function parseLiteral(state: State): Literal {
+    const token = consumeToken(state);
+    if (!token) {
+        state.errors.push("Expected Number");
+        return {
+            kind: "NumberLiteral",
+            value: 0,
+            start: 0,
+            end: 0,
+        };
+    }
+    if (token.type == TokenType.Char) {
         return {
             kind: "CharLiteral",
             value: token.value,
@@ -31,18 +33,6 @@ function parseNumber(state: State): NumberLiteral | CharLiteral {
             end: token.end,
         };
     }
-
-    if (!token || token.type != TokenType.Number) {
-        state.errors.push("Expected Number");
-        return {
-            kind: "NumberLiteral",
-            value: 0,
-            start: token ? token.start : 0,
-            end: token ? token.end : 0,
-        };
-    }
-
-    consumeToken(state);
     return {
         kind: "NumberLiteral",
         value: parseFloat(token.value),
@@ -55,10 +45,10 @@ function parseParen(state: State): Expression {
     const token = state.tokens[state.i] ?? null;
     if (!token) {
         state.errors.push("Expected Input");
-        return parseNumber(state);
+        return parseLiteral(state);
     }
     const start = token.start;
-    if (token.type == TokenType.Number) return parseNumber(state);
+    if (token.type == TokenType.Number) return parseLiteral(state);
     if (token.type == TokenType.Char && token.value == "(") {
         consumeToken(state);
         const expr = parseExpr(state);
@@ -85,7 +75,7 @@ function parseParen(state: State): Expression {
         };
     }
     state.errors.push("Expected LParen");
-    return parseNumber(state);
+    return parseLiteral(state);
 }
 
 function parseMatrix(state: State): Expression {

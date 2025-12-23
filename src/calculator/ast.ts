@@ -45,16 +45,16 @@ export type CharLiteral = {
     end: number;
 };
 
+export type Literal = CharLiteral | NumberLiteral;
+
 export type Placeholder = {
     kind: "Placeholder";
-    pos: number;
+    start: number;
+    end: number;
 };
 
 export type Expression =
-    | {
-          expr: Expression;
-      }
-    | NumberLiteral
+    | Literal
     | BinaryExpression
     | ExpExpression
     | ParenExpression
