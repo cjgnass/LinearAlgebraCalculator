@@ -94,13 +94,83 @@ function parseParen(state: State): Expression {
     return parseNumber(state);
 }
 
+function parseMatrix(state: State): Expression {
+    const token = state.tokens[state.i] ?? null;
+    if (!token || token.type != TokenType.LBracket) {
+        return parseParen(state);
+    }
+    const exprs: Expression[] = [];
+    while (true) {
+        const expr = parseParen(state);
+        exprs.push(expr);
+        if (
+            state.i >= state.tokens.length ||
+            (expr.kind === "StringLiteral" && expr.value === "]")
+        )
+            break;
+    }
+    const matrix = [[]];
+    const exprsEnd =
+        exprs[exprs.length - 1].value === "]" ? exprs.length - 1 : exprs.length;
+    let expectingExpr = true;
+    for (let i = 1; i < exprsEnd; i++) {
+        const currExpr = exprs[i];
+        if (currExpr.kind !== "StringLiteral") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push(currExpr);
+                expectingExpr = false;
+            }
+            continue;
+        }
+        if (currExpr.value === ",") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push({
+                    kind: "Placeholder",
+                    pos: currExpr.start,
+                });
+            }
+            expectingExpr = true;
+            continue;
+        }
+        if (currExpr.value === ";") {
+            if (expectingExpr) {
+                matrix[matrix.length - 1].push({
+                    kind: "Placeholder",
+                    pos: currExpr.start,
+                });
+            }
+            matrix.push([]);
+            expectingExpr = true;
+        }
+    }
+    if (expectingExpr) {
+        matrix[matrix.length - 1].push({
+            kind: "Placeholder",
+            pos:
+                exprs[exprs.length - 1].value === "]"
+                    ? exprs[exprs.length - 1].start
+                    : exprs[exprs.length - 1].end,
+        });
+    }
+
+    return {
+        kind: "MatrixExpression",
+        matrix,
+        start: token.start,
+        end:
+            exprs[exprs.length - 1].value === "]"
+                ? exprs[exprs.length - 1].end
+                : exprs[exprs.length - 1].end + 1,
+    };
+}
+
 function parseExp(state: State): Expression {
-    let left = parseParen(state);
+    let left = parseMatrix(state);
     while (true) {
         const token = state.tokens[state.i] ?? null;
         if (!token || token.type != TokenType.Exp) break;
         consumeToken(state);
-        const right = parseParen(state);
+        const right = parseMatrix(state);
         console.log("right.end", right.end);
         console.log("right", right);
         console.log("token.end", token.end);
@@ -191,80 +261,8 @@ function parseAddSub(state: State): Expression {
     return left;
 }
 
-function parseMatrix(state: State): Expression {
-    const token = state.tokens[state.i] ?? null;
-    if (!token || token.type != TokenType.LBracket) {
-        return parseAddSub(state);
-    }
-
-    const exprs: Expression[] = [];
-    while (true) {
-        const expr = parseAddSub(state);
-        exprs.push(expr);
-        if (
-            state.i >= state.tokens.length ||
-            (expr.kind === "StringLiteral" && expr.value === "]")
-        )
-            break;
-    }
-
-    const matrix = [[]];
-    const exprsEnd =
-        exprs[exprs.length - 1].value === "]" ? exprs.length - 1 : exprs.length;
-    let expectingExpr = true;
-    for (let i = 1; i < exprsEnd; i++) {
-        const currExpr = exprs[i];
-        if (currExpr.kind !== "StringLiteral") {
-            if (expectingExpr) {
-                matrix[matrix.length - 1].push(currExpr);
-                expectingExpr = false;
-            }
-            continue;
-        }
-        if (currExpr.value === ",") {
-            if (expectingExpr) {
-                matrix[matrix.length - 1].push({
-                    kind: "Placeholder",
-                    pos: currExpr.start,
-                });
-            }
-            expectingExpr = true;
-            continue;
-        }
-        if (currExpr.value === ";") {
-            if (expectingExpr) {
-                matrix[matrix.length - 1].push({
-                    kind: "Placeholder",
-                    pos: currExpr.start,
-                });
-            }
-            matrix.push([]);
-            expectingExpr = true;
-        }
-    }
-    if (expectingExpr) {
-        matrix[matrix.length - 1].push({
-            kind: "Placeholder",
-            pos:
-                exprs[exprs.length - 1].value === "]"
-                    ? exprs[exprs.length - 1].start
-                    : exprs[exprs.length - 1].end,
-        });
-    }
-
-    return {
-        kind: "MatrixExpression",
-        matrix,
-        start: token.start,
-        end:
-            exprs[exprs.length - 1].value === "]"
-                ? exprs[exprs.length - 1].end
-                : exprs[exprs.length - 1].end + 1,
-    };
-}
-
 function parseExpr(state: State): Expression {
-    return parseMatrix(state);
+    return parseAddSub(state);
 }
 
 export function parse(tokens: Token[]): {
