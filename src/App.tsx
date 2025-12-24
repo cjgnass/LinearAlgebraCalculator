@@ -1,13 +1,12 @@
-import { useState } from "react";
 import "./App.css";
-import Editor from "./calculator/editor";
+import Calculator from "./calculator/calculator";
 
 function App() {
-  return (
-    <>
-      <Editor />
-    </>
-  );
+    return (
+        <>
+            <Calculator />
+        </>
+    );
 }
 
 export default App;
