@@ -421,7 +421,6 @@ function simplifyMultiplication(
 export function simplify(expr: Expression): NumberLiteral | MatrixExpression {
   switch (expr.kind) {
     case "BinaryExpression":
-    case "ExpExpression":
       if (expr.op === "+") return simplifyAddition(expr);
       if (expr.op === "-") return simplifySubtraction(expr);
       if (expr.op === "*") return simplifyMultiplication(expr);

@@ -161,16 +161,15 @@ function parseExp(state: State): Expression {
     if (!token || token.type != TokenType.Exp) break;
     consumeToken(state);
     const right = parseMatrix(state);
-    console.log("right.end", right.end);
-    console.log("right", right);
-    console.log("token.end", token.end);
 
     const start = left.start;
     const end = right.end === 0 ? token.end : right.end;
-    console.log("end", end);
 
     left = {
-      kind: "ExpExpression",
+      kind: "BinaryExpression",
+      op: "^",
+      opStart: token.start,
+      opEnd: token.end,
       left,
       right:
         right.start === right.end

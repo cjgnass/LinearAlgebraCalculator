@@ -7,17 +7,9 @@ export type MatrixExpression = {
 
 export type BinaryExpression = {
   kind: "BinaryExpression";
-  op: "+" | "-" | "*" | "/";
+  op: "+" | "-" | "*" | "/" | "^";
   opStart: number;
   opEnd: number;
-  left: Expression;
-  right: Expression;
-  start: number;
-  end: number;
-};
-
-export type ExpExpression = {
-  kind: "ExpExpression";
   left: Expression;
   right: Expression;
   start: number;
@@ -56,7 +48,6 @@ export type Placeholder = {
 export type Expression =
   | Literal
   | BinaryExpression
-  | ExpExpression
   | ParenExpression
   | MatrixExpression
   | Placeholder;
