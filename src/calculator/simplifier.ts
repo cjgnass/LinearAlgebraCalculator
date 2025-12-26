@@ -54,6 +54,12 @@ function getMatrixTranspose(expr: MatrixExpression): MatrixExpression {
   };
 }
 
+function getMatrixInverse(
+  expr: MatrixExpression,
+): MatrixExpression | NumberLiteral {
+  return nanExpr;
+}
+
 function multiplyMatrices(
   left: MatrixExpression,
   right: MatrixExpression,
@@ -317,6 +323,8 @@ function simplifyExponent(
   const cols = dimensions[1];
   if (right.kind === "NumberLiteral" && rows === cols) {
     const expValue = right.value;
+    if (expValue === -1) return getMatrixInverse(right);
+    if (expValue < 1) return nanExpr;
     if (expValue === 1) return right;
 
     let output = multiplyMatrices(
