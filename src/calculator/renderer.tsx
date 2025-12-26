@@ -449,6 +449,16 @@ function Placeholder({ expr, caret, ref }: Props): React.ReactNode {
   );
 }
 
+function CharLiteral({ expr, text, caret, ref }: Props): React.ReactNode {
+  const parts = getParts(text, caret, expr.start, expr.end);
+  return (
+    <span ref={ref} className="char-literal">
+      {caret === expr.start && <Caret />}
+      {parts}
+    </span>
+  );
+}
+
 function Expression({ expr, text, caret, ref }: Props): React.ReactNode {
   switch (expr.kind) {
     case "NumberLiteral":
@@ -467,6 +477,8 @@ function Expression({ expr, text, caret, ref }: Props): React.ReactNode {
       );
     case "Placeholder":
       return <Placeholder expr={expr} text={text} caret={caret} ref={ref} />;
+    case "CharLiteral":
+      return <CharLiteral expr={expr} text={text} caret={caret} ref={ref} />;
     default:
       return <></>;
   }
