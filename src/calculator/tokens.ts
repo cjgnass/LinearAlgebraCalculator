@@ -6,6 +6,8 @@ export enum TokenType {
     Div = "Div",
     Exp = "Exp",
     Char = "Char",
+    Dot = "Dot",
+    Cross = "Cross",
 }
 
 export type Token = {
