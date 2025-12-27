@@ -55,7 +55,6 @@ export function RenderInteractiveExpr({
     caret: number;
     fontSize: number;
 }): React.ReactNode {
-    console.log(expr);
     const parts: React.ReactNode[] = [];
     parts.push(...getParts(text, caret, 0, expr.start));
     parts.push(<Expression key="expr" expr={expr} text={text} caret={caret} />);

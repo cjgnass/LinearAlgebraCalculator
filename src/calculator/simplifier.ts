@@ -342,7 +342,6 @@ function simplifyExponent(
     const cols = dimensions[1];
     if (right.kind === "NumberLiteral" && rows === cols) {
         const expValue = right.value;
-        console.log("expValue", expValue);
         if (expValue < 1) return nanExpr;
         if (expValue === 1 || Number.isNaN(expValue)) return left;
 
