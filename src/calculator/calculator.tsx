@@ -3,7 +3,130 @@ import { simplify } from "./simplifier.ts";
 import React, { useState, useMemo } from "react";
 import { lex } from "./lexer.ts";
 import { parse } from "./parser.ts";
+import type { Expression, BinaryExpression, MatrixExpression } from "./ast.ts";
 import "./calculator.css";
+
+type BinaryNavTarget = {
+  kind: "division" | "exponent";
+  side: "left" | "right";
+  left: Expression;
+  right: Expression;
+};
+
+type MatrixNavTarget = {
+  kind: "matrix";
+  row: number;
+  col: number;
+  element: Expression;
+  matrix: Expression[][];
+};
+
+type NavTarget = BinaryNavTarget | MatrixNavTarget;
+
+function caretInExpr(expr: Expression, caret: number) {
+  return caret >= expr.start && caret <= expr.end;
+}
+
+function clampCaret(target: Expression, offset: number) {
+  const desired = target.start + offset;
+  if (desired < target.start) return target.start;
+  if (desired > target.end) return target.end;
+  return desired;
+}
+
+function findMatrixNavTarget(
+  expr: Expression,
+  caret: number,
+): MatrixNavTarget | null {
+  if (expr.kind === "MatrixExpression") {
+    const matrix = (expr as MatrixExpression).matrix;
+    for (let row = 0; row < matrix.length; row++) {
+      const rowElements = matrix[row];
+      for (let col = 0; col < rowElements.length; col++) {
+        const element = rowElements[col];
+        if (!caretInExpr(element, caret)) continue;
+        const nested = findMatrixNavTarget(element, caret);
+        if (nested) return nested;
+        return { kind: "matrix", row, col, element, matrix };
+      }
+    }
+  }
+
+  if (expr.kind === "BinaryExpression") {
+    const binary = expr as BinaryExpression;
+    if (caretInExpr(binary.left, caret)) {
+      const nested = findMatrixNavTarget(binary.left, caret);
+      if (nested) return nested;
+    }
+    if (caretInExpr(binary.right, caret)) {
+      const nested = findMatrixNavTarget(binary.right, caret);
+      if (nested) return nested;
+    }
+  }
+
+  if (expr.kind === "ParenExpression") {
+    if (caretInExpr(expr.expr, caret)) {
+      return findMatrixNavTarget(expr.expr, caret);
+    }
+  }
+
+  return null;
+}
+
+function findBinaryNavTarget(
+  expr: Expression,
+  caret: number,
+): BinaryNavTarget | null {
+  if (expr.kind === "BinaryExpression") {
+    const binary = expr as BinaryExpression;
+    const inLeft = caretInExpr(binary.left, caret);
+    const inRight = caretInExpr(binary.right, caret);
+    if (inLeft) {
+      const nested = findBinaryNavTarget(binary.left, caret);
+      if (nested) return nested;
+    }
+    if (inRight) {
+      const nested = findBinaryNavTarget(binary.right, caret);
+      if (nested) return nested;
+    }
+    if (!inLeft && !inRight) return null;
+    if (binary.op === "/") {
+      return {
+        kind: "division",
+        side: inLeft ? "left" : "right",
+        left: binary.left,
+        right: binary.right,
+      };
+    }
+    if (binary.op === "^") {
+      return {
+        kind: "exponent",
+        side: inLeft ? "left" : "right",
+        left: binary.left,
+        right: binary.right,
+      };
+    }
+  }
+
+  if (expr.kind === "ParenExpression") {
+    if (caretInExpr(expr.expr, caret)) {
+      return findBinaryNavTarget(expr.expr, caret);
+    }
+  }
+
+  if (expr.kind === "MatrixExpression") {
+    const matrix = (expr as MatrixExpression).matrix;
+    for (const row of matrix) {
+      for (const element of row) {
+        if (!caretInExpr(element, caret)) continue;
+        const nested = findBinaryNavTarget(element, caret);
+        if (nested) return nested;
+      }
+    }
+  }
+
+  return null;
+}
 
 export default function Calculator() {
   const [text, setText] = useState("");
@@ -38,6 +161,39 @@ export default function Calculator() {
           setCaret(caret + 1);
         }
         break;
+      case "ArrowUp":
+      case "ArrowDown": {
+        const direction = k === "ArrowUp" ? "up" : "down";
+        const matrixTarget = findMatrixNavTarget(expr, caret);
+        if (matrixTarget) {
+          const targetRow =
+            direction === "up"
+              ? matrixTarget.row - 1
+              : matrixTarget.row + 1;
+          const rowElements = matrixTarget.matrix[targetRow];
+          if (rowElements && matrixTarget.col < rowElements.length) {
+            e.preventDefault();
+            const targetElement = rowElements[matrixTarget.col];
+            const offset = caret - matrixTarget.element.start;
+            setCaret(clampCaret(targetElement, offset));
+          }
+          break;
+        }
+        const binaryTarget = findBinaryNavTarget(expr, caret);
+        if (binaryTarget) {
+          const movingUp = direction === "up";
+          if (movingUp && binaryTarget.side === "right") {
+            e.preventDefault();
+            const offset = caret - binaryTarget.right.start;
+            setCaret(clampCaret(binaryTarget.left, offset));
+          } else if (!movingUp && binaryTarget.side === "left") {
+            e.preventDefault();
+            const offset = caret - binaryTarget.left.start;
+            setCaret(clampCaret(binaryTarget.right, offset));
+          }
+        }
+        break;
+      }
       case "Backspace":
         if (caret > 0) {
           e.preventDefault();
