@@ -118,36 +118,60 @@ function parseMatrix(state: State): Expression {
       ? exprs.length - 1
       : exprs.length;
   let expectingExpr = true;
+  const markInvalidElement = (end: number) => {
+    const row = matrix[matrix.length - 1];
+    const last = row[row.length - 1];
+    if (!last) return;
+    if (last.kind === "CharLiteral") {
+      last.end = end;
+      return;
+    }
+    row[row.length - 1] = {
+      kind: "CharLiteral",
+      value: "",
+      start: last.start,
+      end,
+    };
+  };
   for (let i = 1; i < exprsEnd; i++) {
     const currExpr = exprs[i];
-    if (currExpr.kind !== "CharLiteral") {
+    if (currExpr.kind === "CharLiteral") {
+      if (currExpr.value === ",") {
+        if (expectingExpr) {
+          matrix[matrix.length - 1].push({
+            kind: "Placeholder",
+            start: currExpr.start,
+            end: currExpr.start + 1,
+          });
+        }
+        expectingExpr = true;
+        continue;
+      }
+      if (currExpr.value === ";") {
+        if (expectingExpr) {
+          matrix[matrix.length - 1].push({
+            kind: "Placeholder",
+            start: currExpr.start,
+            end: currExpr.start + 1,
+          });
+        }
+        matrix.push([]);
+        expectingExpr = true;
+        continue;
+      }
       if (expectingExpr) {
         matrix[matrix.length - 1].push(currExpr);
         expectingExpr = false;
+      } else {
+        markInvalidElement(currExpr.end);
       }
       continue;
     }
-    if (currExpr.value === ",") {
-      if (expectingExpr) {
-        matrix[matrix.length - 1].push({
-          kind: "Placeholder",
-          start: currExpr.start,
-          end: currExpr.start + 1,
-        });
-      }
-      expectingExpr = true;
-      continue;
-    }
-    if (currExpr.value === ";") {
-      if (expectingExpr) {
-        matrix[matrix.length - 1].push({
-          kind: "Placeholder",
-          start: currExpr.start,
-          end: currExpr.start + 1,
-        });
-      }
-      matrix.push([]);
-      expectingExpr = true;
+    if (expectingExpr) {
+      matrix[matrix.length - 1].push(currExpr);
+      expectingExpr = false;
+    } else {
+      markInvalidElement(currExpr.end);
     }
   }
   if (expectingExpr) {
