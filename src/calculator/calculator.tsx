@@ -131,7 +131,8 @@ function findBinaryNavTarget(
 export default function Calculator() {
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
-  const fontSize = 2;
+  const [isFocused, setIsFocused] = useState(false);
+  const fontSize = 1;
 
   const { expr } = useMemo(() => {
     const sanitizedText = text
@@ -247,11 +248,13 @@ export default function Calculator() {
           role="textbox"
           tabIndex={0}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
         >
           <RenderInteractiveExpr
             expr={expr}
             text={text}
-            caret={caret}
+            caret={isFocused ? caret : -1}
             fontSize={fontSize}
           />
         </div>
