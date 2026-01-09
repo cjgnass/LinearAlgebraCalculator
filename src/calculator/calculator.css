@@ -159,6 +159,7 @@
     display: inline-flex;
     padding: 0em 1em;
     align-items: center;
+    justify-content: center;
 }
 
 .matrix-inner {
