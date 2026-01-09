@@ -5,15 +5,11 @@
     align-items: center;
     min-height: 100px;
     /* border: 1px solid white; */
-    border-right: 1px solid white;
-    border-top: 1px solid white;
-    border-bottom: 1px solid white;
-
-    /* border: 1px solid blue; */
 }
 .input-box {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding: 1rem;
+    border: 1px solid var(--border, #ccc);
+    /* border: 1px solid darkred; */
     min-width: 500px;
     display: flex;
     height: 100%;
@@ -21,14 +17,17 @@
 }
 .input-box:focus {
     outline: 2px solid #6aa3ff;
+    /*outline-offset: 2px;*/
 }
 .output-box {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* padding: 10px; */
     height: 100%;
-    min-width: 100px;
-    border-left: 1px solid var(--border, #ccc);
+    min-width: 200px;
+    border: 1px solid var(--border, #ccc);
+    /* border: 1px solid darkred; */
 }
 
 /* ------------------------------------------------ */

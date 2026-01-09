@@ -21,7 +21,7 @@ type MatrixNavTarget = {
   matrix: Expression[][];
 };
 
-type NavTarget = BinaryNavTarget | MatrixNavTarget;
+// type NavTarget = BinaryNavTarget | MatrixNavTarget;
 
 function caretInExpr(expr: Expression, caret: number) {
   return caret >= expr.start && caret <= expr.end;
@@ -168,9 +168,7 @@ export default function Calculator() {
         const matrixTarget = findMatrixNavTarget(expr, caret);
         if (matrixTarget) {
           const targetRow =
-            direction === "up"
-              ? matrixTarget.row - 1
-              : matrixTarget.row + 1;
+            direction === "up" ? matrixTarget.row - 1 : matrixTarget.row + 1;
           const rowElements = matrixTarget.matrix[targetRow];
           if (rowElements && matrixTarget.col < rowElements.length) {
             e.preventDefault();
@@ -241,27 +239,25 @@ export default function Calculator() {
   }
 
   return (
-    <>
-      <div className="comp-line">
-        <div
-          className="input-box"
-          role="textbox"
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-        >
-          <RenderInteractiveExpr
-            expr={expr}
-            text={text}
-            caret={isFocused ? caret : -1}
-            fontSize={fontSize}
-          />
-        </div>
-        <div className="output-box">
-          <RenderExpr expr={simplify(expr)} fontSize={fontSize} />
-        </div>
+    <div className="comp-line">
+      <div
+        className="input-box"
+        role="textbox"
+        tabIndex={0}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      >
+        <RenderInteractiveExpr
+          expr={expr}
+          text={text}
+          caret={isFocused ? caret : -1}
+          fontSize={fontSize}
+        />
       </div>
-    </>
+      <div className="output-box">
+        <RenderExpr expr={simplify(expr)} fontSize={fontSize} />
+      </div>
+    </div>
   );
 }
