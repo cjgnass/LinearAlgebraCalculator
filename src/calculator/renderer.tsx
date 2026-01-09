@@ -87,10 +87,7 @@ function getParts(
         throwOnError: false,
       });
       parts.push(
-        <span
-          key={`span-${i}`}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />,
+        <span key={`span-${i}`} dangerouslySetInnerHTML={{ __html: html }} />,
       );
     }
   }
@@ -138,13 +135,7 @@ function CrossExpression({ expr, text, caret, ref }: Props): React.ReactNode {
   const left = (expr as BinaryExpression).left;
   const right = (expr as BinaryExpression).right;
   parts.push(
-    <Expression
-      key={"left"}
-      expr={left}
-      text={text}
-      caret={caret}
-      ref={ref}
-    />,
+    <Expression key={"left"} expr={left} text={text} caret={caret} ref={ref} />,
   );
   const exprRightStart =
     (expr as BinaryExpression).right.start === 0
@@ -162,10 +153,7 @@ function CrossExpression({ expr, text, caret, ref }: Props): React.ReactNode {
         html = renderToString("~", { throwOnError: false });
       else html = renderToString(text[i], { throwOnError: false });
       parts.push(
-        <span
-          key={`span-${i}`}
-          dangerouslySetInnerHTML={{ __html: html }}
-        />,
+        <span key={`span-${i}`} dangerouslySetInnerHTML={{ __html: html }} />,
       );
     }
   }
@@ -183,19 +171,13 @@ function CrossExpression({ expr, text, caret, ref }: Props): React.ReactNode {
 
 function BinaryExpression({ expr, text, caret, ref }: Props): React.ReactNode {
   if ((expr as BinaryExpression).op === "/") {
-    return (
-      <DivExpression expr={expr} text={text} caret={caret} ref={ref} />
-    );
+    return <DivExpression expr={expr} text={text} caret={caret} ref={ref} />;
   }
   if ((expr as BinaryExpression).op === "^") {
-    return (
-      <ExpExpression expr={expr} text={text} caret={caret} ref={ref} />
-    );
+    return <ExpExpression expr={expr} text={text} caret={caret} ref={ref} />;
   }
   if ((expr as BinaryExpression).op === "x") {
-    return (
-      <CrossExpression expr={expr} text={text} caret={caret} ref={ref} />
-    );
+    return <CrossExpression expr={expr} text={text} caret={caret} ref={ref} />;
   }
   const parts = [];
   parts.push(
@@ -239,16 +221,16 @@ function ExpExpression({ expr, text, caret, ref }: Props): React.ReactNode {
       <span className="exp-base">
         <Expression
           key={"base"}
-          expr={(expr as ExpExpression).left}
+          expr={(expr as BinaryExpression).left}
           text={text}
           caret={caret}
         />
       </span>
       <span className="exp-exponent">
-        {caret == expr.right.start && <Caret />}
+        {caret == (expr as BinaryExpression).right.start && <Caret />}
         <Expression
           key={"exp"}
-          expr={(expr as ExpExpression).right}
+          expr={(expr as BinaryExpression).right}
           text={text}
           caret={caret}
         />
@@ -298,12 +280,7 @@ function ParenExpression({ expr, text, caret, ref }: Props): React.ReactNode {
         caret={caret}
         ref={innerRef}
       />
-      {getParts(
-        text,
-        caret,
-        (expr as ParenExpression).expr.end,
-        expr.end - 1,
-      )}
+      {getParts(text, caret, (expr as ParenExpression).expr.end, expr.end - 1)}
       {expr.end !== (expr as ParenExpression).expr.end && (
         <span
           className="paren"
@@ -311,8 +288,9 @@ function ParenExpression({ expr, text, caret, ref }: Props): React.ReactNode {
           dangerouslySetInnerHTML={{ __html: rightParenHtml }}
         />
       )}
-      {(expr as ParenExpression).expr.end !== expr.end &&
-        caret == expr.end && <Caret />}
+      {(expr as ParenExpression).expr.end !== expr.end && caret == expr.end && (
+        <Caret />
+      )}
     </span>
   );
 }
@@ -365,18 +343,13 @@ function MatrixOutput({
               key={`cell-${rowIndex}-${colIndex}`}
               className="matrix-element"
             >
-              <RenderExpr
-                expr={element}
-                fontSize={fontSize ?? 1}
-              />
+              <RenderExpr expr={element} fontSize={fontSize ?? 1} />
             </span>
           ));
           // Add empty spans to fill remaining columns
           const emptySpans = Array.from(
             { length: maxCols - row.length },
-            (_, i) => (
-              <span key={`empty-${rowIndex}-${row.length + i}`} />
-            ),
+            (_, i) => <span key={`empty-${rowIndex}-${row.length + i}`} />,
           );
           return [...elements, ...emptySpans];
         })}
@@ -440,20 +413,13 @@ function MatrixExpression({
                 key={`cell-${rowIndex}-${colIndex}`}
                 className="matrix-element"
               >
-                <RenderExpr
-                  expr={element}
-                  fontSize={fontSize ?? 1}
-                />
+                <RenderExpr expr={element} fontSize={fontSize ?? 1} />
               </span>
             ));
             // Add empty spans to fill remaining columns
             const emptySpans = Array.from(
               { length: maxCols - row.length },
-              (_, i) => (
-                <span
-                  key={`empty-${rowIndex}-${row.length + i}`}
-                />
-              ),
+              (_, i) => <span key={`empty-${rowIndex}-${row.length + i}`} />,
             );
             return [...elements, ...emptySpans];
           })}
@@ -491,21 +457,16 @@ function MatrixExpression({
               key={`cell-${rowIndex}-${colIndex}`}
               className="matrix-element"
             >
-              {element.kind !== "Placeholder" &&
-                caret === element.start && <Caret />}
-              <Expression
-                expr={element}
-                text={text}
-                caret={caret}
-              />
+              {element.kind !== "Placeholder" && caret === element.start && (
+                <Caret />
+              )}
+              <Expression expr={element} text={text} caret={caret} />
             </span>
           ));
           // Add empty spans to fill remaining columns
           const emptySpans = Array.from(
             { length: maxCols - row.length },
-            (_, i) => (
-              <span key={`empty-${rowIndex}-${row.length + i}`} />
-            ),
+            (_, i) => <span key={`empty-${rowIndex}-${row.length + i}`} />,
           );
           return [...elements, ...emptySpans];
         })}
@@ -544,49 +505,23 @@ function CharLiteral({ expr, text, caret, ref }: Props): React.ReactNode {
 function Expression({ expr, text, caret, ref }: Props): React.ReactNode {
   switch (expr.kind) {
     case "NumberLiteral":
-      return (
-        <NumberLiteral
-          expr={expr}
-          text={text}
-          caret={caret}
-          ref={ref}
-        />
-      );
+      return <NumberLiteral expr={expr} text={text} caret={caret} ref={ref} />;
     case "BinaryExpression":
       return (
-        <BinaryExpression
-          expr={expr}
-          text={text}
-          caret={caret}
-          ref={ref}
-        />
+        <BinaryExpression expr={expr} text={text} caret={caret} ref={ref} />
       );
     case "ParenExpression":
       return (
-        <ParenExpression
-          expr={expr}
-          text={text}
-          caret={caret}
-          ref={ref}
-        />
+        <ParenExpression expr={expr} text={text} caret={caret} ref={ref} />
       );
     case "MatrixExpression":
       return (
-        <MatrixExpression
-          expr={expr}
-          text={text}
-          caret={caret}
-          ref={ref}
-        />
+        <MatrixExpression expr={expr} text={text} caret={caret} ref={ref} />
       );
     case "Placeholder":
-      return (
-        <Placeholder expr={expr} text={text} caret={caret} ref={ref} />
-      );
+      return <Placeholder expr={expr} text={text} caret={caret} ref={ref} />;
     case "CharLiteral":
-      return (
-        <CharLiteral expr={expr} text={text} caret={caret} ref={ref} />
-      );
+      return <CharLiteral expr={expr} text={text} caret={caret} ref={ref} />;
     default:
       return <></>;
   }
