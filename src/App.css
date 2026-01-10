@@ -1,37 +1,39 @@
 .main { 
-  display: inline-flex
+  width: 100%;
 }
+
+.head { 
+  border-bottom: 1px solid white;
+  height: 4rem;
+  width: 100%;
+}
+.body { 
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  padding: 1rem;
+
+}
+
+
 .calc-area { 
   display: inline-flex;
   flex-direction: column;
-  /* border: 1px solid white; */
-  /* border-radius: 1rem; */
-
+  margin-right: 1rem;
 }
 
 .calc-row { 
   display: inline-flex;
   flex-direction: row;
   margin-top: 1rem;
-  /* border-bottom: 1px solid white; */
   border: 1px solid white;
   border-radius: 1rem;
 }
 
 .remove-button { 
-  /* border: 1px solid white; */
-  /* background: transparent; */
-  /* border-bottom: 1px solid white; */
-  /* border-top: 1px solid white; */
   width: 2rem;
   background: transparent;
   border: 0px;
-  /* border-left: 1px solid white; */
-  /* border-radius-left: 1rem; */
-  /* border-right: 1px solid white; */
-  /* border-bottom: 1px solid white; */
-  /* border-top: 1px solid white; */
-  /* border-bottom: 1px solid white; */
 }
 
 .add-button { 
@@ -43,9 +45,11 @@
 }
 
 .graph-area { 
-  float: right;
-  height: 40rem;
-  min-width: 50rem;
+  margin-top: 1rem;
+  margin-left: 1rem;
+  height: 50rem;
+  flex: 1 1 auto;
+  min-width: 0;
   border : 1px solid white;
   border-radius: 1rem;
   

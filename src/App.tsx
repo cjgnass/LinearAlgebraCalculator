@@ -21,27 +21,30 @@ function App() {
   };
 
   return (
-    <>
-      <div className="calc-area">
-        {rows.map((row) => (
-          <div className="calc-row" key={row.id}>
-            <button
-              className="remove-button"
-              onClick={() => removeRow(row.id)}
-              aria-label="Remove row"
-              type="button"
-            >
-              x
-            </button>
-            <Calculator />
-          </div>
-        ))}
-        <button className="add-button" onClick={addRow} type="button">
-          Add Row
-        </button>
+    <div className="main">
+      <div className="head"></div>
+      <div className="body">
+        <div className="calc-area">
+          {rows.map((row) => (
+            <div className="calc-row" key={row.id}>
+              <button
+                className="remove-button"
+                onClick={() => removeRow(row.id)}
+                aria-label="Remove row"
+                type="button"
+              >
+                x
+              </button>
+              <Calculator />
+            </div>
+          ))}
+          <button className="add-button" onClick={addRow} type="button">
+            Add Row
+          </button>
+        </div>
+        <div className="graph-area"></div>
       </div>
-      <div className="graph-area"></div>
-    </>
+    </div>
   );
 }
 
