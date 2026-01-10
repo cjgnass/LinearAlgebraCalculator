@@ -40,6 +40,7 @@ function App() {
           Add Row
         </button>
       </div>
+      <div className="graph-area"></div>
     </>
   );
 }

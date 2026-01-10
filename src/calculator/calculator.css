@@ -1,23 +1,23 @@
 @import "katex/dist/katex.min.css";
 .comp-line {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
     min-height: 100px;
     /* border: 1px solid white; */
     /* border-right: 1px solid white; */
     /* border-top: 1px solid white; */
     /* border-bottom: 1px solid white; */
-
-    /* border: 1px solid blue; */
+    width: 100%;
 }
 .input-box {
     padding-left: 10px;
     padding-right: 10px;
-    min-width: 500px;
+    min-width: 100px;
     display: flex;
     height: 100%;
     align-items: center;
+    border-left: 1px solid white;
 }
 .input-box:focus {
     outline: 2px solid #6aa3ff;
@@ -27,7 +27,7 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    min-width: 100px;
+    min-width: 50px;
     border-left: 1px solid var(--border, #ccc);
 }
 
@@ -159,7 +159,6 @@
     display: inline-flex;
     padding: 0em 1em;
     align-items: center;
-    justify-content: center;
 }
 
 .matrix-inner {

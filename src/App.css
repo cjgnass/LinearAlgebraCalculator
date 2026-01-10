@@ -1,35 +1,52 @@
+.main { 
+  display: inline-flex
+}
 .calc-area { 
   display: inline-flex;
   flex-direction: column;
-  border: 1px solid white;
-  border-radius: 1rem;
+  /* border: 1px solid white; */
+  /* border-radius: 1rem; */
 
 }
 
 .calc-row { 
   display: inline-flex;
   flex-direction: row;
-  border-bottom: 1px solid white;
+  margin-top: 1rem;
+  /* border-bottom: 1px solid white; */
+  border: 1px solid white;
+  border-radius: 1rem;
 }
 
 .remove-button { 
   /* border: 1px solid white; */
   /* background: transparent; */
-  /* border-left: 1px solid white; */
   /* border-bottom: 1px solid white; */
   /* border-top: 1px solid white; */
   width: 2rem;
   background: transparent;
   border: 0px;
-  border-right: 1px solid white;
+  /* border-left: 1px solid white; */
+  /* border-radius-left: 1rem; */
+  /* border-right: 1px solid white; */
+  /* border-bottom: 1px solid white; */
+  /* border-top: 1px solid white; */
   /* border-bottom: 1px solid white; */
 }
 
 .add-button { 
+  margin-top: 1rem;
   background: transparent;
-  border: 0px;
-  border-top: 1px solid white;
+  border: 1px solid white; 
+  border-radius: 1rem;
   height: 2rem;
-  /* border-left: 1px solid white; */
-  /* border-bottom: 1px solid white; */
+}
+
+.graph-area { 
+  float: right;
+  height: 40rem;
+  min-width: 50rem;
+  border : 1px solid white;
+  border-radius: 1rem;
+  
 }
