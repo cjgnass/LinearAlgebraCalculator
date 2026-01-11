@@ -1,6 +1,6 @@
 import "./App.css";
 import Calculator from "./calculator/calculator";
-import Graph from "./Graph";
+import Graph from "./graph/graph";
 import { useState } from "react";
 
 function App() {
