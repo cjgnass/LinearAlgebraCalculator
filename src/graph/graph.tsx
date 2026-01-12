@@ -58,6 +58,24 @@ function Graph() {
     isDragging.current = false;
   }, []);
 
+  const handleScroll = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (e.deltaY > 0) {
+      // scroll down
+      setViewport((prev) => ({
+        centerX: prev.centerX,
+        centerY: prev.centerY,
+        zoom: prev.zoom * 0.9,
+      }));
+    } else {
+      // scroll up
+      setViewport((prev) => ({
+        centerX: prev.centerX,
+        centerY: prev.centerY,
+        zoom: prev.zoom * 1.1,
+      }));
+    }
+  });
+
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
@@ -113,6 +131,7 @@ function Graph() {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onWheel={handleScroll}
         onMouseLeave={handleMouseLeave}
       />
     </div>
