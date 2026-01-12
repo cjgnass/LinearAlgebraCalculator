@@ -1,5 +1,8 @@
 .main { 
   width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .head { 
@@ -9,10 +12,11 @@
 }
 .body { 
   display: flex;
+  flex: 1 1 auto;
   flex-direction: row;
   flex-wrap: nowrap;
   padding: 1rem;
-
+  min-height: 0;
 }
 
 
@@ -20,6 +24,8 @@
   display: inline-flex;
   flex-direction: column;
   margin-right: 1rem;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .calc-row { 
@@ -50,16 +56,15 @@
   border: 0px;
   border-top-right-radius: 1rem;
   border-bottom-right-radius: 1rem;
-  border-left: 1px solid white;
+  border-left: 1px solid "#AAAAAA";
 }
 
 .graph-area { 
   margin-top: 1rem;
-  margin-left: 1rem;
-  height: 50rem;
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
   border : 1px solid white;
   border-radius: 1rem;
-  
+  overflow: hidden;
 }

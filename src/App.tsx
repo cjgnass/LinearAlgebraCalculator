@@ -47,7 +47,9 @@ function App() {
               <button
                 className="graph-button"
                 onClick={() => toggleGraphRow(row)}
-                style={{ background: rows.get(row) ? "white" : "transparent" }}
+                style={{
+                  background: rows.get(row) ? "#AAAAAA" : "transparent",
+                }}
               ></button>
             </div>
           ))}
