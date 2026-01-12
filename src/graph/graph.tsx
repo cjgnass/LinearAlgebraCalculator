@@ -58,7 +58,7 @@ function Graph() {
     isDragging.current = false;
   }, []);
 
-  const handleScroll = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleScroll = useCallback((e: React.WheelEvent<HTMLCanvasElement>) => {
     if (e.deltaY > 0) {
       // scroll down
       setViewport((prev) => ({
