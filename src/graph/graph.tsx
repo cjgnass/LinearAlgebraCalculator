@@ -74,7 +74,7 @@ function Graph() {
         zoom: prev.zoom * 1.1,
       }));
     }
-  });
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
