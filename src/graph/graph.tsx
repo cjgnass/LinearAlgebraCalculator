@@ -19,7 +19,6 @@ function Graph() {
   });
 
   useEffect(() => {
-    console.log("bruh");
     const container = containerRef.current;
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
