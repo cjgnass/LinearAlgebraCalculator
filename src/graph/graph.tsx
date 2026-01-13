@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Viewport } from "./coordinates";
+import type { Expression } from "../calculator/ast";
+
 import {
   clearCanvas,
   renderAxes,
@@ -8,7 +10,11 @@ import {
 } from "./renderer";
 import "./graph.css";
 
-function Graph() {
+interface GraphProps {
+  exprs?: Map<number, Expression>;
+}
+
+function Graph({ exprs }: GraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
