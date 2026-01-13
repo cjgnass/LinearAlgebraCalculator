@@ -265,7 +265,6 @@ function drawVector(
   const origin = graphToScreen(0, 0, viewport, width, height);
   const target = graphToScreen(x, y, viewport, width, height);
 
-  // Draw arrow line
   ctx.beginPath();
   ctx.moveTo(origin.x, origin.y);
   ctx.lineTo(target.x, target.y);
@@ -273,7 +272,6 @@ function drawVector(
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Draw arrow head
   if (x === 0 && y === 0) return;
 
   const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
