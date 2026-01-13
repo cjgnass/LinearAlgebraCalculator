@@ -1,4 +1,5 @@
 import { graphToScreen, getVisibleBounds, type Viewport } from "./coordinates";
+import type { Expression, MatrixExpression } from "../calculator/ast";
 
 const BACKGROUND_COLOR = "#AAAAAA";
 
@@ -200,4 +201,93 @@ export function renderAxisLabels(
   }
 
   ctx.restore();
+}
+
+export function renderExpressions(
+  ctx: CanvasRenderingContext2D,
+  viewport: Viewport,
+  width: number,
+  height: number,
+  exprs: Map<number, Expression> | undefined,
+): void {
+  if (exprs) {
+    for (const [, expr] of exprs) {
+      switch (expr.kind) {
+        case "MatrixExpression":
+          renderMatrix(ctx, viewport, width, height, expr);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
+
+function renderMatrix(
+  ctx: CanvasRenderingContext2D,
+  viewport: Viewport,
+  width: number,
+  height: number,
+  expr: MatrixExpression,
+) {
+  const matrix = expr.matrix;
+  const rows = matrix.length;
+  if (rows === 0) return;
+  const cols = matrix[0].length;
+
+  for (let c = 0; c < cols; c++) {
+    const xExpr = matrix[0][c];
+
+    let yVal = 0;
+    if (rows > 1) {
+      const yExpr = matrix[1][c];
+      if (!yExpr || !xExpr) return;
+
+      if (yExpr.kind !== "NumberLiteral") continue;
+      yVal = yExpr.value;
+    }
+
+    if (xExpr.kind !== "NumberLiteral") continue;
+    const xVal = xExpr.value;
+
+    drawVector(ctx, viewport, width, height, xVal, yVal);
+  }
+}
+
+function drawVector(
+  ctx: CanvasRenderingContext2D,
+  viewport: Viewport,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+) {
+  const origin = graphToScreen(0, 0, viewport, width, height);
+  const target = graphToScreen(x, y, viewport, width, height);
+
+  ctx.beginPath();
+  ctx.moveTo(origin.x, origin.y);
+  ctx.lineTo(target.x, target.y);
+  ctx.strokeStyle = "#FF0000";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  if (x === 0 && y === 0) return;
+
+  const angle = Math.atan2(target.y - origin.y, target.x - origin.x);
+  const headLength = 15;
+
+  ctx.beginPath();
+  ctx.moveTo(target.x, target.y);
+  ctx.lineTo(
+    target.x - headLength * Math.cos(angle - Math.PI / 6),
+    target.y - headLength * Math.sin(angle - Math.PI / 6),
+  );
+  ctx.lineTo(
+    target.x - headLength * Math.cos(angle + Math.PI / 6),
+    target.y - headLength * Math.sin(angle + Math.PI / 6),
+  );
+  ctx.closePath();
+  ctx.fillStyle = "#FF0000";
+  ctx.fill();
 }

@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Viewport } from "./coordinates";
+import type { Expression } from "../calculator/ast";
+
 import {
   clearCanvas,
   renderAxes,
   renderAxisLabels,
   renderGrid,
+  renderExpressions,
 } from "./renderer";
 import "./graph.css";
 
-function Graph() {
+interface GraphProps {
+  exprs?: Map<number, Expression>;
+}
+
+function Graph({ exprs }: GraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -89,6 +96,7 @@ function Graph() {
       renderGrid(ctx, viewport, width, height);
       renderAxes(ctx, viewport, width, height);
       renderAxisLabels(ctx, viewport, width, height);
+      renderExpressions(ctx, viewport, width, height, exprs);
     };
 
     const updateSize = () => {
@@ -121,7 +129,7 @@ function Graph() {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [viewport]);
+  }, [viewport, exprs]);
 
   return (
     <div ref={containerRef} className="graph-container">

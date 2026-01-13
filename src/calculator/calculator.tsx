@@ -1,10 +1,15 @@
 import { RenderExpr, RenderInteractiveExpr } from "./renderer.tsx";
 import { simplify } from "./simplifier.ts";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { lex } from "./lexer.ts";
 import { parse } from "./parser.ts";
 import type { Expression, BinaryExpression, MatrixExpression } from "./ast.ts";
 import "./calculator.css";
+
+interface CalculatorProps {
+  rowId: number;
+  onChange?: (rowId: number, expr: Expression) => void;
+}
 
 type BinaryNavTarget = {
   kind: "division" | "exponent";
@@ -128,13 +133,13 @@ function findBinaryNavTarget(
   return null;
 }
 
-export default function Calculator() {
+export default function Calculator({ rowId, onChange }: CalculatorProps) {
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const fontSize = 1;
 
-  const { expr } = useMemo(() => {
+  const expr = useMemo(() => {
     const sanitizedText = text
       .replace(/\s*(\/|,)\s*/g, "$1") // trim around / or ,
       .replace(/\[\s+/g, "[") // remove whitespace right after [
@@ -146,6 +151,16 @@ export default function Calculator() {
     const tokens = lex(sanitizedText);
     return parse(tokens);
   }, [text]);
+
+  const simplifiedExpr = useMemo(() => {
+    return simplify(expr);
+  }, [expr]);
+
+  useEffect(() => {
+    if (onChange) {
+      onChange(rowId, simplifiedExpr);
+    }
+  }, [rowId, simplifiedExpr, onChange]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     const k = e.key;
@@ -256,7 +271,7 @@ export default function Calculator() {
         />
       </div>
       <div className="output-box">
-        <RenderExpr expr={simplify(expr)} fontSize={fontSize} />
+        <RenderExpr expr={simplifiedExpr} fontSize={fontSize} />
       </div>
     </div>
   );
