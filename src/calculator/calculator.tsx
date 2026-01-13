@@ -134,7 +134,7 @@ export default function Calculator() {
   const [isFocused, setIsFocused] = useState(false);
   const fontSize = 1;
 
-  const { expr } = useMemo(() => {
+  const expr = useMemo(() => {
     const sanitizedText = text
       .replace(/\s*(\/|,)\s*/g, "$1") // trim around / or ,
       .replace(/\[\s+/g, "[") // remove whitespace right after [

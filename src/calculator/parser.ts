@@ -49,8 +49,7 @@ function parseLiteral(state: State): Literal {
       value: -next.value,
       start: token.start,
       end: next.end,
-    }
-
+    };
   }
   return {
     kind: "NumberLiteral",
@@ -245,10 +244,10 @@ function parseExp(state: State): Expression {
       right:
         right.start === right.end
           ? {
-            kind: "Placeholder",
-            start: token.end,
-            end: token.end + 1,
-          }
+              kind: "Placeholder",
+              start: token.end,
+              end: token.end + 1,
+            }
           : right,
       start,
       end,
@@ -262,10 +261,7 @@ function parseMultDiv(state: State): Expression {
 
   while (true) {
     const token = state.tokens[state.i] ?? null;
-    if (
-      !token ||
-      (token.type != TokenType.Mult && token.type != TokenType.Div)
-    )
+    if (!token || (token.type != TokenType.Mult && token.type != TokenType.Div))
       break;
 
     consumeToken(state);
@@ -330,10 +326,8 @@ function parseExpr(state: State): Expression {
   return parseAddSub(state);
 }
 
-export function parse(tokens: Token[]): {
-  expr: Expression;
-} {
+export function parse(tokens: Token[]): Expression {
   const state: State = { tokens, i: 0, errors: [] };
   const expr = parseExpr(state);
-  return { expr };
+  return expr;
 }
