@@ -7,6 +7,7 @@ import {
   renderAxes,
   renderAxisLabels,
   renderGrid,
+  renderExpressions,
 } from "./renderer";
 import "./graph.css";
 
@@ -95,6 +96,7 @@ function Graph({ exprs }: GraphProps) {
       renderGrid(ctx, viewport, width, height);
       renderAxes(ctx, viewport, width, height);
       renderAxisLabels(ctx, viewport, width, height);
+      renderExpressions(ctx, viewport, width, height, exprs);
     };
 
     const updateSize = () => {
@@ -127,7 +129,7 @@ function Graph({ exprs }: GraphProps) {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [viewport]);
+  }, [viewport, exprs]);
 
   return (
     <div ref={containerRef} className="graph-container">
