@@ -147,6 +147,10 @@ export default function Calculator() {
     return parse(tokens);
   }, [text]);
 
+  const simplifiedExpr = useMemo(() => {
+    return simplify(expr);
+  }, [expr]);
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     const k = e.key;
     switch (k) {
@@ -256,7 +260,7 @@ export default function Calculator() {
         />
       </div>
       <div className="output-box">
-        <RenderExpr expr={simplify(expr)} fontSize={fontSize} />
+        <RenderExpr expr={simplifiedExpr} fontSize={fontSize} />
       </div>
     </div>
   );
